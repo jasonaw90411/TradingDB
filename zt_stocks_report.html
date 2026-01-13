@@ -1,0 +1,1811 @@
+
+    <!DOCTYPE html>
+    <html lang="zh-CN">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>涨停股票数据</title>
+        <style>
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+                font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+            }
+            body {
+                font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+                background: #f5f5f7;
+                min-height: 100vh;
+                padding: 20px;
+            }
+            .header {
+                text-align: center;
+                margin-bottom: 30px;
+                color: #333;
+            }
+            h1 {
+                font-size: 2.5rem;
+                font-weight: 700;
+                margin-bottom: 10px;
+                color: #2c3e50;
+            }
+            .subtitle {
+                font-size: 1.1rem;
+                color: #666;
+            }
+            .refresh-btn {
+                display: block;
+                margin: 0 auto 30px;
+                padding: 12px 30px;
+                background: #34495e;
+                color: white;
+                border: none;
+                border-radius: 8px;
+                cursor: pointer;
+                font-size: 16px;
+                font-weight: 600;
+                transition: all 0.3s ease;
+            }
+            .refresh-btn:hover {
+                background: #2c3e50;
+                transform: translateY(-2px);
+            }
+            .container {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+                gap: 25px;
+                max-width: 1400px;
+                margin: 0 auto;
+            }
+            .section {
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                padding: 25px;
+                transition: all 0.3s ease;
+            }
+            .section:hover {
+                box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            }
+            h2 {
+                color: #2c3e50;
+                margin-bottom: 20px;
+                font-size: 1.5rem;
+                font-weight: 600;
+                border-bottom: 2px solid #e0e0e0;
+                padding-bottom: 10px;
+            }
+            .table-container {
+                max-height: 600px;
+                overflow-y: auto;
+                border-radius: 8px;
+                border: 1px solid #e0e0e0;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+            }
+            th {
+                background: #f8f9fa;
+                color: #2c3e50;
+                padding: 12px 15px;
+                text-align: left;
+                font-weight: 600;
+                position: sticky;
+                top: 0;
+                z-index: 10;
+                border-bottom: 2px solid #e0e0e0;
+            }
+            td {
+                padding: 12px 15px;
+                text-align: left;
+                border-bottom: 1px solid #f0f0f0;
+                color: #333;
+            }
+            tr:hover {
+                background-color: #f8f9fa;
+                transition: all 0.2s ease;
+            }
+            tr:nth-child(even) {
+                background-color: #fafafa;
+            }
+            /* Scrollbar styling */
+            .table-container::-webkit-scrollbar {
+                width: 8px;
+            }
+            .table-container::-webkit-scrollbar-track {
+                background: #f1f1f1;
+                border-radius: 4px;
+            }
+            .table-container::-webkit-scrollbar-thumb {
+                background: #bdc3c7;
+                border-radius: 4px;
+            }
+            .table-container::-webkit-scrollbar-thumb:hover {
+                background: #7f8c8d;
+                border-radius: 4px;
+                transition: background 0.2s ease;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>A股涨停股票数据</h1>
+            <p class="subtitle">实时更新的涨停板数据统计</p>
+        </div>
+        <button class="refresh-btn" onclick="location.reload()">🔄 刷新数据</button>
+        <div class="container">
+            <div class="section">
+                <h2>📈 最近一个交易日涨停股票 - 2026-01-13 <span style="font-size: 0.8em; color: #666;">(共 54 只)</span></h2>
+                <div class="table-container">
+                    <table>
+                        <tr>
+                            <th>股票代码</th>
+                            <th>股票名称</th>
+                            <th>收盘价</th>
+                            <th>涨跌幅(%)</th>
+                            <th>成交量</th>
+                            <th>成交额(万元)</th>
+                        </tr>
+        
+                    <tr>
+                        <td>000593</td>
+                        <td>德龙汇能</td>
+                        <td>15.83</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>48797.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000681</td>
+                        <td>视觉中国</td>
+                        <td>31.48</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>421947.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002044</td>
+                        <td>美年健康</td>
+                        <td>7.41</td>
+                        <td>9.94</td>
+                        <td>0</td>
+                        <td>33801.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002115</td>
+                        <td>三维通信</td>
+                        <td>17.81</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>20076.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002131</td>
+                        <td>利欧股份</td>
+                        <td>9.03</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>52693.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002400</td>
+                        <td>省广集团</td>
+                        <td>12.55</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>457123.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002465</td>
+                        <td>海格通信</td>
+                        <td>24.2</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>749556.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002931</td>
+                        <td>锋龙股份</td>
+                        <td>61.79</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>8070.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>003007</td>
+                        <td>直真科技</td>
+                        <td>54.34</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>40895.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>003041</td>
+                        <td>真爱美家</td>
+                        <td>70.44</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>68141.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600877</td>
+                        <td>电科芯片</td>
+                        <td>22.54</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>341661.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600477</td>
+                        <td>杭萧钢构</td>
+                        <td>4.36</td>
+                        <td>10.1</td>
+                        <td>0</td>
+                        <td>163123.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600776</td>
+                        <td>东方通信</td>
+                        <td>24.63</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>353371.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603000</td>
+                        <td>人民网</td>
+                        <td>25.48</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>62812.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603888</td>
+                        <td>新华网</td>
+                        <td>26.91</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>202071.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603598</td>
+                        <td>引力传媒</td>
+                        <td>31.37</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>81348.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600676</td>
+                        <td>交运股份</td>
+                        <td>8.22</td>
+                        <td>10.04</td>
+                        <td>0</td>
+                        <td>3757.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002219</td>
+                        <td>新里程</td>
+                        <td>2.5</td>
+                        <td>10.13</td>
+                        <td>0</td>
+                        <td>52004.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>601992</td>
+                        <td>金隅集团</td>
+                        <td>2.13</td>
+                        <td>9.79</td>
+                        <td>0</td>
+                        <td>39165.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>001255</td>
+                        <td>博菲电气</td>
+                        <td>41.48</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>18623.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>601116</td>
+                        <td>三江购物</td>
+                        <td>18.98</td>
+                        <td>10.03</td>
+                        <td>0</td>
+                        <td>32082.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002574</td>
+                        <td>明牌珠宝</td>
+                        <td>6.99</td>
+                        <td>10.08</td>
+                        <td>0</td>
+                        <td>33602.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002718</td>
+                        <td>友邦吊顶</td>
+                        <td>62.33</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>47002.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002342</td>
+                        <td>巨力索具</td>
+                        <td>13.29</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>482425.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>001202</td>
+                        <td>炬申股份</td>
+                        <td>19.44</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>44129.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600800</td>
+                        <td>渤海化学</td>
+                        <td>3.91</td>
+                        <td>10.14</td>
+                        <td>0</td>
+                        <td>46750.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002607</td>
+                        <td>中公教育</td>
+                        <td>3.29</td>
+                        <td>10.03</td>
+                        <td>0</td>
+                        <td>168864.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000710</td>
+                        <td>贝瑞基因</td>
+                        <td>14.45</td>
+                        <td>9.97</td>
+                        <td>0</td>
+                        <td>54513.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002172</td>
+                        <td>澳洋健康</td>
+                        <td>4.6</td>
+                        <td>10.05</td>
+                        <td>0</td>
+                        <td>24735.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000516</td>
+                        <td>国际医学</td>
+                        <td>5.63</td>
+                        <td>9.96</td>
+                        <td>0</td>
+                        <td>85400.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603682</td>
+                        <td>锦和商管</td>
+                        <td>7.59</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>14759.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603739</td>
+                        <td>蔚蓝生物</td>
+                        <td>16.74</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>22932.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600662</td>
+                        <td>外服控股</td>
+                        <td>5.68</td>
+                        <td>10.08</td>
+                        <td>0</td>
+                        <td>24251.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603355</td>
+                        <td>莱克电气</td>
+                        <td>34.56</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>15979.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002769</td>
+                        <td>普路通</td>
+                        <td>13.75</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>61807.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000785</td>
+                        <td>居然智家</td>
+                        <td>3.61</td>
+                        <td>10.06</td>
+                        <td>0</td>
+                        <td>139887.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600721</td>
+                        <td>百花医药</td>
+                        <td>10.45</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>108501.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000078</td>
+                        <td>海王生物</td>
+                        <td>4.08</td>
+                        <td>9.97</td>
+                        <td>0</td>
+                        <td>108783.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002490</td>
+                        <td>山东墨龙</td>
+                        <td>8.22</td>
+                        <td>10.04</td>
+                        <td>0</td>
+                        <td>81251.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603282</td>
+                        <td>亚光股份</td>
+                        <td>22.88</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>13966.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002207</td>
+                        <td>准油股份</td>
+                        <td>9.02</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>73815.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>001260</td>
+                        <td>坤泰股份</td>
+                        <td>22.02</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>18615.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600170</td>
+                        <td>上海建工</td>
+                        <td>3.04</td>
+                        <td>10.14</td>
+                        <td>0</td>
+                        <td>285235.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600783</td>
+                        <td>鲁信创投</td>
+                        <td>39.44</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>549687.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>001330</td>
+                        <td>博纳影业</td>
+                        <td>9.11</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>177222.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002865</td>
+                        <td>钧达股份</td>
+                        <td>80.09</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>415764.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002589</td>
+                        <td>瑞康医药</td>
+                        <td>3.83</td>
+                        <td>10.06</td>
+                        <td>0</td>
+                        <td>90821.0</td>
+                    </tr>
+            
+                    <tr>
+                        <td>605186</td>
+                        <td>健麾信息</td>
+                        <td>22.97</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>16762.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603138</td>
+                        <td>海量数据</td>
+                        <td>17.36</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>83719.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002112</td>
+                        <td>三变科技</td>
+                        <td>17.48</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>113681.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600089</td>
+                        <td>特变电工</td>
+                        <td>27.37</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>1191269.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002451</td>
+                        <td>摩恩电气</td>
+                        <td>12.35</td>
+                        <td>9.97</td>
+                        <td>0</td>
+                        <td>171120.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002135</td>
+                        <td>东南网架</td>
+                        <td>5.63</td>
+                        <td>9.96</td>
+                        <td>0</td>
+                        <td>37518.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603488</td>
+                        <td>展鹏科技</td>
+                        <td>11.74</td>
+                        <td>10.03</td>
+                        <td>0</td>
+                        <td>69203.0</td>
+                    </tr>
+            
+                </table>
+            </div>
+        </div>
+            <div class="section">
+                <h2>📊 前天涨停股票 - 2026-01-12 <span style="font-size: 0.8em; color: #666;">(共 128 只)</span></h2>
+                <div class="table-container">
+                    <table>
+                        <tr>
+                            <th>股票代码</th>
+                            <th>股票名称</th>
+                            <th>收盘价</th>
+                            <th>涨跌幅(%)</th>
+                            <th>成交量</th>
+                            <th>成交额(万元)</th>
+                        </tr>
+        
+                    <tr>
+                        <td>002131</td>
+                        <td>利欧股份</td>
+                        <td>8.21</td>
+                        <td>10.05</td>
+                        <td>0</td>
+                        <td>25057.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000503</td>
+                        <td>国新健康</td>
+                        <td>11.61</td>
+                        <td>10.05</td>
+                        <td>0</td>
+                        <td>117378.0</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002969</td>
+                        <td>嘉美包装</td>
+                        <td>16.58</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>7137.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002342</td>
+                        <td>巨力索具</td>
+                        <td>12.08</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>19591.0</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002931</td>
+                        <td>锋龙股份</td>
+                        <td>56.17</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>2231.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002792</td>
+                        <td>通宇通讯</td>
+                        <td>66.86</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>56787.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>003007</td>
+                        <td>直真科技</td>
+                        <td>49.4</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>8913.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000681</td>
+                        <td>视觉中国</td>
+                        <td>28.62</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>36345.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002115</td>
+                        <td>三维通信</td>
+                        <td>16.19</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>91335.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002519</td>
+                        <td>银河电子</td>
+                        <td>11.47</td>
+                        <td>9.97</td>
+                        <td>0</td>
+                        <td>49796.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002512</td>
+                        <td>达华智能</td>
+                        <td>7.62</td>
+                        <td>9.96</td>
+                        <td>0</td>
+                        <td>70453.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002044</td>
+                        <td>美年健康</td>
+                        <td>6.74</td>
+                        <td>9.95</td>
+                        <td>0</td>
+                        <td>25229.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600880</td>
+                        <td>博瑞传播</td>
+                        <td>7.12</td>
+                        <td>10.05</td>
+                        <td>0</td>
+                        <td>22016.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600676</td>
+                        <td>交运股份</td>
+                        <td>7.47</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>3857.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600477</td>
+                        <td>杭萧钢构</td>
+                        <td>3.96</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>7088.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600776</td>
+                        <td>东方通信</td>
+                        <td>22.39</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>17049.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603496</td>
+                        <td>恒为科技</td>
+                        <td>35.49</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>21183.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600783</td>
+                        <td>鲁信创投</td>
+                        <td>35.85</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>42053.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603598</td>
+                        <td>引力传媒</td>
+                        <td>28.52</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>4640.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600637</td>
+                        <td>东方明珠</td>
+                        <td>14.65</td>
+                        <td>9.98</td>
+                        <td>0</td>
+                        <td>143130.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603000</td>
+                        <td>人民网</td>
+                        <td>23.16</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>79678.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600828</td>
+                        <td>茂业商业</td>
+                        <td>7.69</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>39929.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603305</td>
+                        <td>旭升集团</td>
+                        <td>21.01</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>283008.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600498</td>
+                        <td>烽火通信</td>
+                        <td>42.82</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>205935.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603888</td>
+                        <td>新华网</td>
+                        <td>24.46</td>
+                        <td>9.98</td>
+                        <td>0</td>
+                        <td>39006.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600877</td>
+                        <td>电科芯片</td>
+                        <td>20.49</td>
+                        <td>9.98</td>
+                        <td>0</td>
+                        <td>47382.0</td>
+                    </tr>
+            
+                    <tr>
+                        <td>003041</td>
+                        <td>真爱美家</td>
+                        <td>64.04</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>29776.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002316</td>
+                        <td>亚联发展</td>
+                        <td>6.28</td>
+                        <td>9.98</td>
+                        <td>0</td>
+                        <td>33420.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600579</td>
+                        <td>中化装备</td>
+                        <td>9.37</td>
+                        <td>9.98</td>
+                        <td>0</td>
+                        <td>15108.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000889</td>
+                        <td>中嘉博创</td>
+                        <td>3.94</td>
+                        <td>10.06</td>
+                        <td>0</td>
+                        <td>19589.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600986</td>
+                        <td>浙文互联</td>
+                        <td>10.74</td>
+                        <td>10.04</td>
+                        <td>0</td>
+                        <td>99265.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>601615</td>
+                        <td>明阳智能</td>
+                        <td>19.68</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>220126.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600633</td>
+                        <td>浙数文化</td>
+                        <td>15.33</td>
+                        <td>9.97</td>
+                        <td>0</td>
+                        <td>83781.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603090</td>
+                        <td>宏盛股份</td>
+                        <td>66.83</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>14151.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600094</td>
+                        <td>大名城</td>
+                        <td>5.03</td>
+                        <td>10.07</td>
+                        <td>0</td>
+                        <td>34934.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000803</td>
+                        <td>山高环能</td>
+                        <td>9.01</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>31631.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603017</td>
+                        <td>中衡设计</td>
+                        <td>14.63</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>41492.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603059</td>
+                        <td>倍加洁</td>
+                        <td>34.88</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>7426.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002088</td>
+                        <td>鲁阳节能</td>
+                        <td>12.49</td>
+                        <td>10.04</td>
+                        <td>0</td>
+                        <td>32647.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002881</td>
+                        <td>美格智能</td>
+                        <td>51.37</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>127177.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000890</td>
+                        <td>法尔胜</td>
+                        <td>5.82</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>26377.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603171</td>
+                        <td>税友股份</td>
+                        <td>78.17</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>49370.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000969</td>
+                        <td>安泰科技</td>
+                        <td>27.71</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>201338.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002471</td>
+                        <td>中超控股</td>
+                        <td>9.04</td>
+                        <td>9.98</td>
+                        <td>0</td>
+                        <td>195394.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002046</td>
+                        <td>国机精工</td>
+                        <td>51.03</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>205453.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002400</td>
+                        <td>省广集团</td>
+                        <td>11.41</td>
+                        <td>10.03</td>
+                        <td>0</td>
+                        <td>333499.0</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002523</td>
+                        <td>天桥起重</td>
+                        <td>4.92</td>
+                        <td>10.07</td>
+                        <td>0</td>
+                        <td>30998.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000766</td>
+                        <td>通化金马</td>
+                        <td>27.87</td>
+                        <td>9.98</td>
+                        <td>0</td>
+                        <td>129719.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>601106</td>
+                        <td>中国一重</td>
+                        <td>5.95</td>
+                        <td>9.98</td>
+                        <td>0</td>
+                        <td>223811.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000066</td>
+                        <td>中国长城</td>
+                        <td>16.62</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>205569.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000917</td>
+                        <td>电广传媒</td>
+                        <td>13.27</td>
+                        <td>10.03</td>
+                        <td>0</td>
+                        <td>252148.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600586</td>
+                        <td>金晶科技</td>
+                        <td>6.71</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>39716.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>601992</td>
+                        <td>金隅集团</td>
+                        <td>1.94</td>
+                        <td>10.23</td>
+                        <td>0</td>
+                        <td>48888.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603703</td>
+                        <td>盛洋科技</td>
+                        <td>18.9</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>197948.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>601900</td>
+                        <td>南方传媒</td>
+                        <td>15.07</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>35555.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>001896</td>
+                        <td>豫能控股</td>
+                        <td>6.01</td>
+                        <td>10.07</td>
+                        <td>0</td>
+                        <td>23979.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002769</td>
+                        <td>普路通</td>
+                        <td>12.5</td>
+                        <td>10.04</td>
+                        <td>0</td>
+                        <td>28664.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002935</td>
+                        <td>天奥电子</td>
+                        <td>25.47</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>54924.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603303</td>
+                        <td>得邦照明</td>
+                        <td>14.32</td>
+                        <td>9.98</td>
+                        <td>0</td>
+                        <td>10790.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600118</td>
+                        <td>中国卫星</td>
+                        <td>116.66</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>798490.0</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603698</td>
+                        <td>航天工程</td>
+                        <td>48.4</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>270018.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600556</td>
+                        <td>天下秀</td>
+                        <td>8.6</td>
+                        <td>9.97</td>
+                        <td>0</td>
+                        <td>214753.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000892</td>
+                        <td>欢瑞世纪</td>
+                        <td>8.98</td>
+                        <td>10.05</td>
+                        <td>0</td>
+                        <td>56600.0</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002574</td>
+                        <td>明牌珠宝</td>
+                        <td>6.35</td>
+                        <td>10.05</td>
+                        <td>0</td>
+                        <td>17703.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002712</td>
+                        <td>思美传媒</td>
+                        <td>7.15</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>28749.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603278</td>
+                        <td>大业股份</td>
+                        <td>17.72</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>166524.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002394</td>
+                        <td>联发股份</td>
+                        <td>19.97</td>
+                        <td>10.03</td>
+                        <td>0</td>
+                        <td>50881.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002202</td>
+                        <td>金风科技</td>
+                        <td>35.13</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>1318951.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603396</td>
+                        <td>金辰股份</td>
+                        <td>38.36</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>36518.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002195</td>
+                        <td>岩山科技</td>
+                        <td>11.39</td>
+                        <td>10.05</td>
+                        <td>0</td>
+                        <td>1034203.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600151</td>
+                        <td>航天机电</td>
+                        <td>22.79</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>658296.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603778</td>
+                        <td>国晟科技</td>
+                        <td>23.43</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>147217.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>001225</td>
+                        <td>和泰机电</td>
+                        <td>80.95</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>10631.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>605398</td>
+                        <td>新炬网络</td>
+                        <td>34.36</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>40158.0</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600640</td>
+                        <td>国脉文化</td>
+                        <td>15.37</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>43935.0</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603882</td>
+                        <td>金域医学</td>
+                        <td>37.03</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>172147.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002856</td>
+                        <td>美芝股份</td>
+                        <td>14.6</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>19268.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600879</td>
+                        <td>航天电子</td>
+                        <td>31.56</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>1256751.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600588</td>
+                        <td>用友网络</td>
+                        <td>16.02</td>
+                        <td>10.03</td>
+                        <td>0</td>
+                        <td>265340.0</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600152</td>
+                        <td>维科技术</td>
+                        <td>8.31</td>
+                        <td>10.07</td>
+                        <td>0</td>
+                        <td>32519.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>601116</td>
+                        <td>三江购物</td>
+                        <td>17.25</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>116035.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603708</td>
+                        <td>家家悦</td>
+                        <td>13.35</td>
+                        <td>9.97</td>
+                        <td>0</td>
+                        <td>53925.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600694</td>
+                        <td>大商股份</td>
+                        <td>20.05</td>
+                        <td>9.98</td>
+                        <td>0</td>
+                        <td>76191.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000785</td>
+                        <td>居然智家</td>
+                        <td>3.28</td>
+                        <td>10.07</td>
+                        <td>0</td>
+                        <td>73098.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002017</td>
+                        <td>东信和平</td>
+                        <td>27.71</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>206669.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603608</td>
+                        <td>天创时尚</td>
+                        <td>9.82</td>
+                        <td>9.97</td>
+                        <td>0</td>
+                        <td>59971.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603488</td>
+                        <td>展鹏科技</td>
+                        <td>10.67</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>48758.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002082</td>
+                        <td>万邦德</td>
+                        <td>16.56</td>
+                        <td>10.03</td>
+                        <td>0</td>
+                        <td>61510.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002103</td>
+                        <td>广博股份</td>
+                        <td>10.43</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>68843.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002465</td>
+                        <td>海格通信</td>
+                        <td>22.0</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>789799.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600729</td>
+                        <td>重庆百货</td>
+                        <td>29.01</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>114184.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600965</td>
+                        <td>福成股份</td>
+                        <td>6.35</td>
+                        <td>10.05</td>
+                        <td>0</td>
+                        <td>22669.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000593</td>
+                        <td>德龙汇能</td>
+                        <td>14.39</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>47873.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002446</td>
+                        <td>盛路通信</td>
+                        <td>13.37</td>
+                        <td>10.04</td>
+                        <td>0</td>
+                        <td>195218.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>601858</td>
+                        <td>中国科传</td>
+                        <td>21.47</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>63319.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>601360</td>
+                        <td>三六零</td>
+                        <td>13.35</td>
+                        <td>9.97</td>
+                        <td>0</td>
+                        <td>618886.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603859</td>
+                        <td>能科科技</td>
+                        <td>52.8</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>181789.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002181</td>
+                        <td>粤 传 媒</td>
+                        <td>11.09</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>163822.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600259</td>
+                        <td>中稀有色</td>
+                        <td>70.64</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>216812.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603339</td>
+                        <td>四方科技</td>
+                        <td>14.89</td>
+                        <td>9.97</td>
+                        <td>0</td>
+                        <td>35163.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000981</td>
+                        <td>山子高科</td>
+                        <td>5.13</td>
+                        <td>10.09</td>
+                        <td>0</td>
+                        <td>848026.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002171</td>
+                        <td>楚江新材</td>
+                        <td>15.64</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>338605.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002151</td>
+                        <td>北斗星通</td>
+                        <td>66.9</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>762650.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>000612</td>
+                        <td>焦作万方</td>
+                        <td>13.31</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>166851.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600651</td>
+                        <td>飞乐音响</td>
+                        <td>8.4</td>
+                        <td>9.95</td>
+                        <td>0</td>
+                        <td>88456.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603602</td>
+                        <td>纵横通信</td>
+                        <td>16.47</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>62624.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002600</td>
+                        <td>领益智造</td>
+                        <td>18.33</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>915341.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002639</td>
+                        <td>雪人集团</td>
+                        <td>27.03</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>664876.2</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603078</td>
+                        <td>江化微</td>
+                        <td>21.42</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>100169.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600552</td>
+                        <td>凯盛科技</td>
+                        <td>15.3</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>181095.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002858</td>
+                        <td>力盛体育</td>
+                        <td>17.39</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>27704.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002443</td>
+                        <td>金洲管道</td>
+                        <td>8.86</td>
+                        <td>10.06</td>
+                        <td>0</td>
+                        <td>38211.0</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603015</td>
+                        <td>弘讯科技</td>
+                        <td>18.82</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>144845.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002413</td>
+                        <td>雷科防务</td>
+                        <td>20.13</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>951663.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002605</td>
+                        <td>姚记科技</td>
+                        <td>27.63</td>
+                        <td>9.99</td>
+                        <td>0</td>
+                        <td>119782.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603232</td>
+                        <td>格尔软件</td>
+                        <td>26.73</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>95826.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002718</td>
+                        <td>友邦吊顶</td>
+                        <td>56.66</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>47876.1</td>
+                    </tr>
+            
+                    <tr>
+                        <td>001255</td>
+                        <td>博菲电气</td>
+                        <td>37.71</td>
+                        <td>10.01</td>
+                        <td>0</td>
+                        <td>18977.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>601611</td>
+                        <td>中国核建</td>
+                        <td>19.94</td>
+                        <td>9.98</td>
+                        <td>0</td>
+                        <td>536019.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>601698</td>
+                        <td>中国卫通</td>
+                        <td>53.88</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>1382314.9</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600475</td>
+                        <td>华光环能</td>
+                        <td>23.53</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>118674.5</td>
+                    </tr>
+            
+                    <tr>
+                        <td>001202</td>
+                        <td>炬申股份</td>
+                        <td>17.67</td>
+                        <td>10.02</td>
+                        <td>0</td>
+                        <td>15460.8</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600868</td>
+                        <td>梅雁吉祥</td>
+                        <td>3.91</td>
+                        <td>10.14</td>
+                        <td>0</td>
+                        <td>88587.3</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603969</td>
+                        <td>银龙股份</td>
+                        <td>11.41</td>
+                        <td>10.03</td>
+                        <td>0</td>
+                        <td>66871.7</td>
+                    </tr>
+            
+                    <tr>
+                        <td>601949</td>
+                        <td>中国出版</td>
+                        <td>7.41</td>
+                        <td>9.94</td>
+                        <td>0</td>
+                        <td>46812.0</td>
+                    </tr>
+            
+                    <tr>
+                        <td>600839</td>
+                        <td>四川长虹</td>
+                        <td>10.38</td>
+                        <td>9.96</td>
+                        <td>0</td>
+                        <td>399816.6</td>
+                    </tr>
+            
+                    <tr>
+                        <td>002659</td>
+                        <td>凯文教育</td>
+                        <td>6.85</td>
+                        <td>9.95</td>
+                        <td>0</td>
+                        <td>51124.4</td>
+                    </tr>
+            
+                    <tr>
+                        <td>603696</td>
+                        <td>安记食品</td>
+                        <td>26.4</td>
+                        <td>10.0</td>
+                        <td>0</td>
+                        <td>123715.7</td>
+                    </tr>
+            
+                    </table>
+                </div>
+            </div>
+        </div>
+    </body>
+</html>
+        

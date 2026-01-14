@@ -44,7 +44,18 @@ def get_board_concept_info():
         return pd.DataFrame()
 
 
-def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
+def get_board_industry_info():
+    """获取行业板块信息数据"""
+    try:
+        df = ak.stock_board_industry_summary_ths()
+        print(f"成功获取行业板块信息数据，共 {len(df)} 个板块")
+        return df
+    except Exception as e:
+        print(f"获取行业板块信息失败: {e}")
+        return pd.DataFrame()
+
+
+def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info):
     # 获取股票市场活跃度数据
     try:
         market_activity = ak.stock_market_activity_legu()
@@ -175,20 +186,21 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
             .container {{
                 display: flex;
                 flex-direction: column;
-                gap: 25px;
-                max-width: 95%;
+                gap: 40px;
+                max-width: 100%;
                 margin: 0 auto;
                 width: 100%;
             }}
             .section {{
                 background: white;
-                border-radius: 12px;
-                box-shadow: 0 8px 32px rgba(0,0,0,0.1);
-                padding: 25px;
+                border-radius: 0;
+                box-shadow: none;
+                border-bottom: 2px solid #e0e0e0;
+                padding: 25px 0;
                 transition: all 0.3s ease;
             }}
             .section:hover {{
-                box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+                box-shadow: none;
             }}
             h2 {{
                 color: #2c3e50;
@@ -688,53 +700,108 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
                 </div>
             </div>
             <div class="section">
-                <h2>�� 概念板块信息 <span style="font-size: 0.8em; color: #666;">(共 """ + str(len(board_info)) + """ 个板块)</span></h2>
-                <div class="table-container">
-                    <table>
-                        <tr>
-                            <th>排名</th>
-                            <th>板块名称</th>
-                            <th>板块代码</th>
-                            <th>最新价</th>
-                            <th>涨跌额</th>
-                            <th>涨跌幅(%)</th>
-                            <th>总市值(亿)</th>
-                            <th>换手率(%)</th>
-                            <th>上涨家数</th>
-                            <th>下跌家数</th>
-                            <th>领涨股票</th>
-                            <th>领涨股票-涨跌幅(%)</th>
-                        </tr>
+                <h2>�� 板块信息 <span style="font-size: 0.8em; color: #666;">概念与行业</span></h2>
+                <div style="display: flex; gap: 20px; width: 100%;">
+                    <div style="flex: 1; margin-right: 10px;">
+                        <h3>概念板块 (共 """ + str(len(board_info)) + """ 个)</h3>
+                        <div class="table-container" style="width: 100%;">
+                            <table>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>板块名称</th>
+                                    <th>板块代码</th>
+                                    <th>最新价</th>
+                                    <th>涨跌额</th>
+                                    <th>涨跌幅(%)</th>
+                                    <th>总市值(亿)</th>
+                                    <th>换手率(%)</th>
+                                    <th>上涨家数</th>
+                                    <th>下跌家数</th>
+                                    <th>领涨股票</th>
+                                    <th>领涨股票-涨跌幅(%)</th>
+                                </tr>
     """
     
     if not board_info.empty:
         for _, row in board_info.iterrows():
             change_class = 'positive' if row['涨跌幅'] > 0 else 'negative'
             html += f"""
-                        <tr>
-                            <td>{int(row['排名'])}</td>
-                            <td>{row['板块名称']}</td>
-                            <td>{row['板块代码']}</td>
-                            <td>{row['最新价']:.2f}</td>
-                            <td>{row['涨跌额']:.2f}</td>
-                            <td class="{change_class}">{row['涨跌幅']:.2f}</td>
-                            <td>{row['总市值']/100000000:.2f}</td>
-                            <td>{row['换手率']:.2f}</td>
-                            <td>{int(row['上涨家数'])}</td>
-                            <td>{int(row['下跌家数'])}</td>
-                            <td>{row['领涨股票']}</td>
-                            <td class="{change_class}">{row['领涨股票-涨跌幅']:.2f}</td>
-                        </tr>
+                                <tr>
+                                    <td>{int(row['排名'])}</td>
+                                    <td>{row['板块名称']}</td>
+                                    <td>{row['板块代码']}</td>
+                                    <td>{row['最新价']:.2f}</td>
+                                    <td>{row['涨跌额']:.2f}</td>
+                                    <td class="{change_class}">{row['涨跌幅']:.2f}</td>
+                                    <td>{row['总市值']/100000000:.2f}</td>
+                                    <td>{row['换手率']:.2f}</td>
+                                    <td>{int(row['上涨家数'])}</td>
+                                    <td>{int(row['下跌家数'])}</td>
+                                    <td>{row['领涨股票']}</td>
+                                    <td class="{change_class}">{row['领涨股票-涨跌幅']:.2f}</td>
+                                </tr>
             """
     else:
         html += """
-                        <tr>
-                            <td colspan="12" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
-                        </tr>
+                                <tr>
+                                    <td colspan="12" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                </tr>
         """
     
     html += """
-                    </table>
+                            </table>
+                        </div>
+                    </div>
+                    <div style="flex: 1; margin-left: 10px;">
+                        <h3>行业板块 (共 """ + str(len(industry_info)) + """ 个)</h3>
+                        <div class="table-container" style="width: 100%;">
+                            <table>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>板块名称</th>
+                                    <th>涨跌幅(%)</th>
+                                    <th>总成交量(万手)</th>
+                                    <th>总成交额(亿元)</th>
+                                    <th>净流入(亿元)</th>
+                                    <th>上涨家数</th>
+                                    <th>下跌家数</th>
+                                    <th>均价</th>
+                                    <th>领涨股</th>
+                                    <th>领涨股-最新价</th>
+                                    <th>领涨股-涨跌幅(%)</th>
+                                </tr>
+    """
+    
+    if not industry_info.empty:
+        for _, row in industry_info.iterrows():
+            change_class = 'positive' if row['涨跌幅'] > 0 else 'negative'
+            html += f"""
+                                <tr>
+                                    <td>{int(row['序号'])}</td>
+                                    <td>{row['板块']}</td>
+                                    <td class="{change_class}">{row['涨跌幅']:.2f}</td>
+                                    <td>{row['总成交量']:.2f}</td>
+                                    <td>{row['总成交额']:.2f}</td>
+                                    <td>{row['净流入']:.2f}</td>
+                                    <td>{int(row['上涨家数'])}</td>
+                                    <td>{int(row['下跌家数'])}</td>
+                                    <td>{row['均价']:.2f}</td>
+                                    <td>{row['领涨股']}</td>
+                                    <td>{row['领涨股-最新价']:.2f}</td>
+                                    <td class="{change_class}">{row['领涨股-涨跌幅']:.2f}</td>
+                                </tr>
+            """
+    else:
+        html += """
+                                <tr>
+                                    <td colspan="12" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                </tr>
+        """
+    
+    html += """
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
             </div>
@@ -1135,6 +1202,10 @@ if __name__ == "__main__":
     print("\n正在获取概念板块信息...")
     board_info = get_board_concept_info()
     
+    # 获取行业板块信息
+    print("\n正在获取行业板块信息...")
+    industry_info = get_board_industry_info()
+    
     # 显示今天涨停股池数据
     if not today_pool.empty:
         print("\n" + "=" * 60)
@@ -1158,7 +1229,7 @@ if __name__ == "__main__":
     print("正在生成HTML报告...")
     print("=" * 60)
     
-    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info)
+    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info)
     
     # 保存HTML文件
     html_file_path = "limit_up_pool_report.html"

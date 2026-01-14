@@ -421,7 +421,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 margin-bottom: 20px;
                 font-size: 1.5rem;
                 font-weight: 600;
-                border-bottom: 3px solid #7f8c8d;
+                border-bottom: 3px solid #a3b3b4;
                 padding-bottom: 10px;
             }}
             .table-container {{
@@ -528,7 +528,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 border-radius: 4px;
             }}
             .table-container::-webkit-scrollbar-thumb {{
-                background: #7f8c8d;
+                background: #a3b3b4;
                 border-radius: 4px;
             }}
             .table-container::-webkit-scrollbar-thumb:hover {{
@@ -566,8 +566,6 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             .lianban-section {{
                 margin-bottom: 30px;
                 background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-                border-bottom: 2px solid #e0e0e0;
-                padding-bottom: 25px;
             }}
             .lianban-cards {{
                 display: flex;
@@ -598,6 +596,11 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 font-size: 0.9rem;
                 color: #666;
                 margin-bottom: 15px;
+            }}
+            .lianban-divider {{
+                height: 2px;
+                background: #a3b3b4;
+                margin: 10px 0;
             }}
             .lianban-stocks {{
                 display: flex;
@@ -924,6 +927,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 html += f"""
                     <div class="lianban-card" style="background-color: {bg_color};">
                         <div class="lianban-title">{lianban_num}连板</div>
+                        <div class="lianban-divider"></div>
                         <div class="lianban-count">共 {len(group)} 只</div>
                         <div class="lianban-stocks">
                             {''.join(stocks_list)}

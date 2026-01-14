@@ -38,6 +38,18 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool):
     today_str = datetime.now().strftime('%Y-%m-%d')
     yesterday_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
     
+    def format_time(time_str):
+        """将时间格式从HHMMSS转换为HH:MM"""
+        if pd.isna(time_str) or time_str == '':
+            return ''
+        try:
+            time_str = str(time_str)
+            if len(time_str) >= 4:
+                return f"{time_str[:2]}:{time_str[2:4]}"
+            return time_str
+        except:
+            return str(time_str)
+    
     html = f"""
     <!DOCTYPE html>
     <html lang="zh-CN">
@@ -230,8 +242,8 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool):
                             <td>{row['总市值']/100000000:.2f}</td>
                             <td>{row['换手率']:.2f}</td>
                             <td>{row['封板资金']/100000000:.2f}</td>
-                            <td>{row['首次封板时间']}</td>
-                            <td>{row['最后封板时间']}</td>
+                            <td>{format_time(row['首次封板时间'])}</td>
+                            <td>{format_time(row['最后封板时间'])}</td>
                             <td>{int(row['炸板次数'])}</td>
                             <td>{row['涨停统计']}</td>
                             <td>{int(row['连板数'])}</td>
@@ -290,7 +302,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool):
                             <td>{row['换手率']:.2f}</td>
                             <td>{row['涨速']:.2f}</td>
                             <td>{row['振幅']:.2f}</td>
-                            <td>{row['昨日封板时间']}</td>
+                            <td>{format_time(row['昨日封板时间'])}</td>
                             <td>{int(row['昨日连板数'])}</td>
                             <td>{row['涨停统计']}</td>
                             <td>{row['所属行业']}</td>

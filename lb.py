@@ -563,6 +563,89 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 width: 100% !important;
                 height: 300px !important;
             }}
+            .lianban-section {{
+                margin-bottom: 30px;
+            }}
+            .lianban-section h2 {{
+                color: #2c3e50;
+                margin-bottom: 20px;
+                font-size: 1.5rem;
+                font-weight: 600;
+                border-bottom: 2px solid #e0e0e0;
+                padding-bottom: 10px;
+            }}
+            .lianban-cards {{
+                display: flex;
+                gap: 20px;
+                flex-wrap: wrap;
+            }}
+            .lianban-card {{
+                flex: 1;
+                min-width: 280px;
+                max-width: 350px;
+                background: white;
+                border-radius: 12px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                padding: 20px;
+                transition: all 0.3s ease;
+                border-left: 4px solid #e74c3c;
+            }}
+            .lianban-card:hover {{
+                box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+                transform: translateY(-5px);
+            }}
+            .lianban-title {{
+                font-size: 1.8rem;
+                font-weight: 700;
+                color: #e74c3c;
+                margin-bottom: 5px;
+            }}
+            .lianban-count {{
+                font-size: 0.9rem;
+                color: #666;
+                margin-bottom: 15px;
+            }}
+            .lianban-stocks {{
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }}
+            .lianban-stock-item {{
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 10px;
+                background: #f8f9fa;
+                border-radius: 6px;
+                transition: all 0.2s ease;
+            }}
+            .lianban-stock-item:hover {{
+                background: #e9ecef;
+            }}
+            .stock-code {{
+                font-weight: 600;
+                color: #2c3e50;
+                font-size: 0.9rem;
+            }}
+            .stock-name {{
+                flex: 1;
+                text-align: center;
+                font-weight: 500;
+                color: #333;
+                font-size: 0.95rem;
+            }}
+            .stock-change {{
+                font-weight: 600;
+                font-size: 0.9rem;
+                padding: 4px 8px;
+                border-radius: 4px;
+            }}
+            .stock-change.positive {{
+                color: #e74c3c;
+            }}
+            .stock-change.negative {{
+                color: #27ae60;
+            }}
         </style>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
@@ -801,6 +884,51 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             <button class="refresh-btn" onclick="refreshCurrentPage()">🔄 刷新数据</button>
             <div class="container">
             <div id="limit-up-page" class="page-content">
+            
+    """
+    
+    # 添加连板分类区域
+    if not today_pool.empty:
+        # 提取连板数大于1的股票
+        lianban_stocks = today_pool[today_pool['连板数'] > 1]
+        
+        if not lianban_stocks.empty:
+            # 按连板数分组
+            lianban_groups = lianban_stocks.groupby('连板数')
+            
+            html += """
+            <div class="lianban-section">
+                <h2>🔥 连板股票分类</h2>
+                <div class="lianban-cards">
+            """
+            
+            for lianban_num, group in sorted(lianban_groups):
+                stocks_list = []
+                for _, row in group.iterrows():
+                    stocks_list.append(f"""
+                        <div class="lianban-stock-item">
+                            <div class="stock-code">{row['代码']}</div>
+                            <div class="stock-name">{row['名称']}</div>
+                            <div class="stock-change {'positive' if row['涨跌幅'] > 0 else 'negative'}">{row['涨跌幅']:.2f}%</div>
+                        </div>
+                    """)
+                
+                html += f"""
+                    <div class="lianban-card">
+                        <div class="lianban-title">{lianban_num}连板</div>
+                        <div class="lianban-count">共 {len(group)} 只</div>
+                        <div class="lianban-stocks">
+                            {''.join(stocks_list)}
+                        </div>
+                    </div>
+                """
+            
+            html += """
+                </div>
+            </div>
+            """
+    
+    html += """
             <div class="section">
                 <h2>📈 今日涨停股池 - """ + today_str + """ <span style="font-size: 0.8em; color: #666;">(共 """ + str(len(today_pool)) + """ 只)</span></h2>
                 <div class="table-container">

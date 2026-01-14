@@ -45,6 +45,13 @@ def get_board_concept_info():
 
 
 def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
+    # 获取股票市场活跃度数据
+    try:
+        market_activity = ak.stock_market_activity_legu()
+        print(f"成功获取股票市场活跃度数据")
+    except Exception as e:
+        print(f"获取股票市场活跃度数据失败: {e}")
+        market_activity = pd.DataFrame()
     """生成涨停股池HTML报告"""
     today_str = datetime.now().strftime('%Y-%m-%d')
     yesterday_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
@@ -240,6 +247,53 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
             .highlight {{
                 background: linear-gradient(135deg, #2c3e5015 0%, #34495e15 100%) !important;
             }}
+            .market-activity-container {{
+                margin-top: 20px;
+            }}
+            .activity-grid {{
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+                gap: 20px;
+                margin-top: 20px;
+            }}
+            .activity-card {{
+                background: white;
+                border-radius: 12px;
+                padding: 20px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                text-align: center;
+                transition: all 0.3s ease;
+                border-left: 4px solid;
+            }}
+            .activity-card:hover {{
+                transform: translateY(-5px);
+                box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+            }}
+            .activity-card.positive {{
+                border-left-color: #27ae60;
+            }}
+            .activity-card.negative {{
+                border-left-color: #e74c3c;
+            }}
+            .activity-card.neutral {{
+                border-left-color: #95a5a6;
+            }}
+            .activity-icon {{
+                font-size: 3rem;
+                margin-bottom: 10px;
+            }}
+            .activity-title {{
+                font-size: 1.1rem;
+                color: #666;
+                margin-bottom: 10px;
+                font-weight: 600;
+            }}
+            .activity-value {{
+                 font-size: 2.5rem;
+                 font-weight: 700;
+                 color: #2c3e50;
+             }}
+            
             /* Scrollbar styling */
             .table-container::-webkit-scrollbar {{
                 width: 8px;
@@ -257,7 +311,35 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
                 border-radius: 4px;
                 transition: background 0.2s ease;
             }}
+            
+            /* Chart styling */
+            .chart-container {{
+                display: flex;
+                justify-content: space-around;
+                flex-wrap: wrap;
+                gap: 30px;
+                margin-top: 30px;
+            }}
+            .chart-card {{
+                background: white;
+                border-radius: 12px;
+                padding: 25px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                width: 450px;
+                text-align: center;
+            }}
+            .chart-title {{
+                font-size: 1.3rem;
+                color: #2c3e50;
+                margin-bottom: 20px;
+                font-weight: 600;
+            }}
+            .chart-canvas {{
+                width: 100% !important;
+                height: 300px !important;
+            }}
         </style>
+        <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
         <script>
             function showPage(pageId) {{
                 var limitUpPage = document.getElementById('limit-up-page');
@@ -280,7 +362,82 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
                     navItems[1].classList.remove('active');
                     headerTitle.textContent = '📊 概念板块信息';
                     headerSubtitle.textContent = '实时更新的概念板块行情数据';
+                    initCharts();
                 }}
+            }}
+            
+            function initCharts() {{
+                // 上涨下跌饼图
+                const upDownCtx = document.getElementById('upDownChart').getContext('2d');
+                new Chart(upDownCtx, {{
+                    type: 'doughnut',
+                    data: {{
+                        labels: ['上涨', '下跌', '平盘'],
+                        datasets: [{{
+                            data: [{market_activity.loc[market_activity['item'] == '上涨', 'value'].iloc[0] if not market_activity.empty and '上涨' in market_activity['item'].values else 0}, {market_activity.loc[market_activity['item'] == '下跌', 'value'].iloc[0] if not market_activity.empty and '下跌' in market_activity['item'].values else 0}, {market_activity.loc[market_activity['item'] == '平盘', 'value'].iloc[0] if not market_activity.empty and '平盘' in market_activity['item'].values else 0}],
+                            backgroundColor: ['#27ae60', '#e74c3c', '#95a5a6'],
+                            borderWidth: 0
+                        }}]
+                    }},
+                    options: {{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {{
+                            legend: {{
+                                position: 'bottom',
+                                labels: {{
+                                    font: {{
+                                        size: 14
+                                    }}
+                                }}
+                            }},
+                            title: {{
+                                display: true,
+                                text: '上涨下跌分布',
+                                font: {{
+                                    size: 16,
+                                    weight: 'bold'
+                                }}
+                            }}
+                        }}
+                    }}
+                }});
+                
+                // 涨停跌停饼图
+                const limitCtx = document.getElementById('limitChart').getContext('2d');
+                new Chart(limitCtx, {{
+                    type: 'doughnut',
+                    data: {{
+                        labels: ['涨停', '真实涨停', '跌停', '真实跌停'],
+                        datasets: [{{
+                            data: [{market_activity.loc[market_activity['item'] == '涨停', 'value'].iloc[0] if not market_activity.empty and '涨停' in market_activity['item'].values else 0}, {market_activity.loc[market_activity['item'] == '真实涨停', 'value'].iloc[0] if not market_activity.empty and '真实涨停' in market_activity['item'].values else 0}, {market_activity.loc[market_activity['item'] == '跌停', 'value'].iloc[0] if not market_activity.empty and '跌停' in market_activity['item'].values else 0}, {market_activity.loc[market_activity['item'] == '真实跌停', 'value'].iloc[0] if not market_activity.empty and '真实跌停' in market_activity['item'].values else 0}],
+                            backgroundColor: ['#e74c3c', '#c0392b', '#3498db', '#2980b9'],
+                            borderWidth: 0
+                        }}]
+                    }},
+                    options: {{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {{
+                            legend: {{
+                                position: 'bottom',
+                                labels: {{
+                                    font: {{
+                                        size: 14
+                                    }}
+                                }}
+                            }},
+                            title: {{
+                                display: true,
+                                text: '涨停跌停分布',
+                                font: {{
+                                    size: 16,
+                                    weight: 'bold'
+                                }}
+                            }}
+                        }}
+                    }}
+                }});
             }}
         </script>
     </head>
@@ -419,7 +576,72 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
             </div>
             <div id="board-info-page" class="page-content" style="display: none;">
             <div class="section">
-                <h2>📊 概念板块信息 <span style="font-size: 0.8em; color: #666;">(共 """ + str(len(board_info)) + """ 个板块)</span></h2>
+                <h2>� 市场赚钱效应 <span style="font-size: 0.8em; color: #666;">实时统计</span></h2>
+                <div class="market-activity-container">
+                    <div class="activity-grid">
+                        <div class="activity-card positive">
+                            <div class="activity-icon">📈</div>
+                            <div class="activity-title">上涨家数</div>
+                            <div class="activity-value">""" + str(market_activity.loc[market_activity['item'] == '上涨', 'value'].iloc[0] if not market_activity.empty and '上涨' in market_activity['item'].values else '0') + """</div>
+                        </div>
+                        <div class="activity-card positive">
+                            <div class="activity-icon">🔥</div>
+                            <div class="activity-title">涨停家数</div>
+                            <div class="activity-value">""" + str(market_activity.loc[market_activity['item'] == '涨停', 'value'].iloc[0] if not market_activity.empty and '涨停' in market_activity['item'].values else '0') + """</div>
+                        </div>
+                        <div class="activity-card positive">
+                            <div class="activity-icon">💎</div>
+                            <div class="activity-title">真实涨停</div>
+                            <div class="activity-value">""" + str(market_activity.loc[market_activity['item'] == '真实涨停', 'value'].iloc[0] if not market_activity.empty and '真实涨停' in market_activity['item'].values else '0') + """</div>
+                        </div>
+                        <div class="activity-card negative">
+                            <div class="activity-icon">📉</div>
+                            <div class="activity-title">下跌家数</div>
+                            <div class="activity-value">""" + str(market_activity.loc[market_activity['item'] == '下跌', 'value'].iloc[0] if not market_activity.empty and '下跌' in market_activity['item'].values else '0') + """</div>
+                        </div>
+                        <div class="activity-card negative">
+                            <div class="activity-icon">💧</div>
+                            <div class="activity-title">跌停家数</div>
+                            <div class="activity-value">""" + str(market_activity.loc[market_activity['item'] == '跌停', 'value'].iloc[0] if not market_activity.empty and '跌停' in market_activity['item'].values else '0') + """</div>
+                        </div>
+                        <div class="activity-card negative">
+                            <div class="activity-icon">💣</div>
+                            <div class="activity-title">真实跌停</div>
+                            <div class="activity-value">""" + str(market_activity.loc[market_activity['item'] == '真实跌停', 'value'].iloc[0] if not market_activity.empty and '真实跌停' in market_activity['item'].values else '0') + """</div>
+                        </div>
+                        <div class="activity-card neutral">
+                            <div class="activity-icon">📊</div>
+                            <div class="activity-title">市场活跃度</div>
+                            <div class="activity-value">""" + str(market_activity.loc[market_activity['item'] == '活跃度', 'value'].iloc[0] if not market_activity.empty and '活跃度' in market_activity['item'].values else '0%') + """</div>
+                        </div>
+                        <div class="activity-card neutral">
+                            <div class="activity-icon">⏸️</div>
+                            <div class="activity-title">平盘家数</div>
+                            <div class="activity-value">""" + str(market_activity.loc[market_activity['item'] == '平盘', 'value'].iloc[0] if not market_activity.empty and '平盘' in market_activity['item'].values else '0') + """</div>
+                        </div>
+                        <div class="activity-card neutral">
+                            <div class="activity-icon">🚫</div>
+                            <div class="activity-title">停牌家数</div>
+                            <div class="activity-value">""" + str(market_activity.loc[market_activity['item'] == '停牌', 'value'].iloc[0] if not market_activity.empty and '停牌' in market_activity['item'].values else '0') + """</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <h2>📊 市场分布饼图 <span style="font-size: 0.8em; color: #666;">可视化分析</span></h2>
+                <div class="chart-container">
+                    <div class="chart-card">
+                        <div class="chart-title">上涨下跌分布</div>
+                        <canvas id="upDownChart" class="chart-canvas"></canvas>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-title">涨停跌停分布</div>
+                        <canvas id="limitChart" class="chart-canvas"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <h2>�� 概念板块信息 <span style="font-size: 0.8em; color: #666;">(共 """ + str(len(board_info)) + """ 个板块)</span></h2>
                 <div class="table-container">
                     <table>
                         <tr>

@@ -337,34 +337,28 @@
             }
             .lianban-section {
                 margin-bottom: 30px;
-            }
-            .lianban-section h2 {
-                color: #2c3e50;
-                margin-bottom: 20px;
-                font-size: 1.5rem;
-                font-weight: 600;
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
                 border-bottom: 2px solid #e0e0e0;
-                padding-bottom: 10px;
+                padding-bottom: 25px;
             }
             .lianban-cards {
                 display: flex;
-                gap: 20px;
-                flex-wrap: wrap;
+                gap: 10px;
+                flex-wrap: nowrap;
+                width: 100%;
             }
             .lianban-card {
                 flex: 1;
-                min-width: 280px;
-                max-width: 350px;
+                min-width: 0;
+                max-width: none;
                 background: white;
-                border-radius: 12px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                border-radius: 0;
+                box-shadow: none;
                 padding: 20px;
                 transition: all 0.3s ease;
-                border-left: 4px solid #e74c3c;
             }
             .lianban-card:hover {
-                box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-                transform: translateY(-5px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             }
             .lianban-title {
                 font-size: 1.8rem;
@@ -417,6 +411,16 @@
             }
             .stock-change.negative {
                 color: #27ae60;
+            }
+            @media (max-width: 1200px) {
+                .lianban-card {
+                    flex: 1 1 calc(50% - 20px);
+                }
+            }
+            @media (max-width: 768px) {
+                .lianban-card {
+                    flex: 1 1 100%;
+                }
             }
         </style>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
@@ -634,86 +638,86 @@
             <div class="news-label">📰 财经快讯</div>
             <div class="news-content">
                 <div class="news-scroll" id="newsScroll">
-                    <span class='news-item'>📰 [财联社 23:45:22] 美国12月二手房销售升至2023年以来最快水平</span>
-                    <span class='news-item'>📊 [财联社 23:47:36] </span>
-                    <span class='news-item'>💹 [财联社 23:50:11] 纳指跌幅扩大至1.5% 标普500指数跌1%</span>
-                    <span class='news-item'>📈 [财联社 23:56:16] </span>
-                    <span class='news-item'>💼 [财联社 00:03:34] 花旗警告称特朗普设置信用卡利率上限的想法可能导致经济放缓</span>
-                    <span class='news-item'>🏢 [财联社 00:04:11] </span>
-                    <span class='news-item'>💡 [财联社 00:06:52] </span>
-                    <span class='news-item'>⚡ [财联社 00:08:23] </span>
-                    <span class='news-item'>🔔 [财联社 00:11:13] 消息人士称美方将公布加沙战后治理架构</span>
-                    <span class='news-item'>📢 [财联社 00:14:45] </span>
-                    <span class='news-item'>📰 [财联社 00:15:23] 普京同卢拉通电话讨论委内瑞拉局势</span>
-                    <span class='news-item'>📊 [财联社 00:18:00] </span>
-                    <span class='news-item'>💹 [财联社 00:21:00] 伊朗：骚乱事件主要幕后人员落网</span>
-                    <span class='news-item'>📈 [财联社 00:25:46] </span>
-                    <span class='news-item'>💼 [财联社 00:27:35] 第五次苏丹和平协商机制会议在开罗举行</span>
-                    <span class='news-item'>🏢 [财联社 00:33:19] </span>
-                    <span class='news-item'>💡 [财联社 00:35:54] 伊朗外长重申将维护国家主权 反对任何外来干预</span>
-                    <span class='news-item'>⚡ [财联社 00:39:10] 欧洲主要股指收盘多数下跌</span>
-                    <span class='news-item'>🔔 [财联社 00:46:13] 柬埔寨：泰国要求推迟联合边界委员会特别会议</span>
-                    <span class='news-item'>📢 [财联社 00:51:07] 卡塔尔证实美军从乌代德空军基地撤人</span>
-                    <span class='news-item'>📰 [同花顺 2026-01-15 00:46:50] 柬埔寨：泰国要求推迟联合边界委员会特别会议</span>
-                    <span class='news-item'>📊 [同花顺 2026-01-15 00:39:37] 俄总统普京同巴西总统卢拉通话，讨论委内瑞拉局势</span>
-                    <span class='news-item'>💹 [同花顺 2026-01-15 00:36:18] 伊朗外长重申将维护国家主权 反对任何外来干预</span>
-                    <span class='news-item'>📈 [同花顺 2026-01-15 00:28:44] 俄旅游业：美禁发签证“不会造成灾难”</span>
-                    <span class='news-item'>💼 [同花顺 2026-01-15 00:26:12] 埃及主办第五次苏丹和平协商机制会议</span>
-                    <span class='news-item'>🏢 [同花顺 2026-01-15 00:22:06] 伊朗：骚乱事件主要幕后人员落网</span>
-                    <span class='news-item'>💡 [同花顺 2026-01-15 00:20:37] 美联储理事米兰重申今年需要降息150个基点</span>
-                    <span class='news-item'>⚡ [同花顺 2026-01-15 00:20:31] 武汉华日精密激光股份有限公司启动上市辅导</span>
-                    <span class='news-item'>🔔 [同花顺 2026-01-15 00:20:22] 北京智同精密传动科技股份有限公司启动上市辅导</span>
-                    <span class='news-item'>📢 [同花顺 2026-01-15 00:16:22] 普京同卢拉通电话讨论委内瑞拉局势</span>
-                    <span class='news-item'>📰 [同花顺 2026-01-15 00:10:50] 消息人士称美方将公布加沙战后治理架构</span>
-                    <span class='news-item'>📊 [同花顺 2026-01-15 00:07:53] 离岸人民币兑美元升破6.97</span>
-                    <span class='news-item'>💹 [同花顺 2026-01-15 00:07:48] 花旗警告称特朗普设置信用卡利率上限的想法可能导致经济放缓</span>
-                    <span class='news-item'>📈 [同花顺 2026-01-15 00:07:41] 我国科研团队首次直接观测到米格达尔效应，为轻暗物质探测迈出坚实的一步</span>
-                    <span class='news-item'>💼 [同花顺 2026-01-14 23:52:09] 纳指跌幅扩大至1.5% 标普500指数跌1%</span>
-                    <span class='news-item'>🏢 [同花顺 2026-01-14 23:49:51] 卡塔尔证实美军从乌代德空军基地撤人</span>
-                    <span class='news-item'>💡 [同花顺 2026-01-14 23:41:37] 四川证监局对振芯科技及谢俊等相关责任人员采取出具警示函措施</span>
-                    <span class='news-item'>⚡ [同花顺 2026-01-14 23:39:13] 越来越多期权投资者押注 美联储今年一整年都将维持利率不变</span>
-                    <span class='news-item'>🔔 [同花顺 2026-01-14 23:37:33] 喀麦隆西北大区发生袭击事件，致14人死亡</span>
-                    <span class='news-item'>📢 [同花顺 2026-01-14 23:16:49] 美最高法院未就特朗普政府关税合法性作出裁决</span>
-                    <span class='news-item'>📰 [财联社 23:45:22] 美国12月二手房销售升至2023年以来最快水平</span>
-                    <span class='news-item'>📊 [财联社 23:47:36] </span>
-                    <span class='news-item'>💹 [财联社 23:50:11] 纳指跌幅扩大至1.5% 标普500指数跌1%</span>
-                    <span class='news-item'>📈 [财联社 23:56:16] </span>
-                    <span class='news-item'>💼 [财联社 00:03:34] 花旗警告称特朗普设置信用卡利率上限的想法可能导致经济放缓</span>
-                    <span class='news-item'>🏢 [财联社 00:04:11] </span>
-                    <span class='news-item'>💡 [财联社 00:06:52] </span>
-                    <span class='news-item'>⚡ [财联社 00:08:23] </span>
-                    <span class='news-item'>🔔 [财联社 00:11:13] 消息人士称美方将公布加沙战后治理架构</span>
-                    <span class='news-item'>📢 [财联社 00:14:45] </span>
-                    <span class='news-item'>📰 [财联社 00:15:23] 普京同卢拉通电话讨论委内瑞拉局势</span>
-                    <span class='news-item'>📊 [财联社 00:18:00] </span>
-                    <span class='news-item'>💹 [财联社 00:21:00] 伊朗：骚乱事件主要幕后人员落网</span>
-                    <span class='news-item'>📈 [财联社 00:25:46] </span>
-                    <span class='news-item'>💼 [财联社 00:27:35] 第五次苏丹和平协商机制会议在开罗举行</span>
-                    <span class='news-item'>🏢 [财联社 00:33:19] </span>
-                    <span class='news-item'>💡 [财联社 00:35:54] 伊朗外长重申将维护国家主权 反对任何外来干预</span>
-                    <span class='news-item'>⚡ [财联社 00:39:10] 欧洲主要股指收盘多数下跌</span>
-                    <span class='news-item'>🔔 [财联社 00:46:13] 柬埔寨：泰国要求推迟联合边界委员会特别会议</span>
-                    <span class='news-item'>📢 [财联社 00:51:07] 卡塔尔证实美军从乌代德空军基地撤人</span>
-                    <span class='news-item'>📰 [同花顺 2026-01-15 00:46:50] 柬埔寨：泰国要求推迟联合边界委员会特别会议</span>
-                    <span class='news-item'>📊 [同花顺 2026-01-15 00:39:37] 俄总统普京同巴西总统卢拉通话，讨论委内瑞拉局势</span>
-                    <span class='news-item'>💹 [同花顺 2026-01-15 00:36:18] 伊朗外长重申将维护国家主权 反对任何外来干预</span>
-                    <span class='news-item'>📈 [同花顺 2026-01-15 00:28:44] 俄旅游业：美禁发签证“不会造成灾难”</span>
-                    <span class='news-item'>💼 [同花顺 2026-01-15 00:26:12] 埃及主办第五次苏丹和平协商机制会议</span>
-                    <span class='news-item'>🏢 [同花顺 2026-01-15 00:22:06] 伊朗：骚乱事件主要幕后人员落网</span>
-                    <span class='news-item'>💡 [同花顺 2026-01-15 00:20:37] 美联储理事米兰重申今年需要降息150个基点</span>
-                    <span class='news-item'>⚡ [同花顺 2026-01-15 00:20:31] 武汉华日精密激光股份有限公司启动上市辅导</span>
-                    <span class='news-item'>🔔 [同花顺 2026-01-15 00:20:22] 北京智同精密传动科技股份有限公司启动上市辅导</span>
-                    <span class='news-item'>📢 [同花顺 2026-01-15 00:16:22] 普京同卢拉通电话讨论委内瑞拉局势</span>
-                    <span class='news-item'>📰 [同花顺 2026-01-15 00:10:50] 消息人士称美方将公布加沙战后治理架构</span>
-                    <span class='news-item'>📊 [同花顺 2026-01-15 00:07:53] 离岸人民币兑美元升破6.97</span>
-                    <span class='news-item'>💹 [同花顺 2026-01-15 00:07:48] 花旗警告称特朗普设置信用卡利率上限的想法可能导致经济放缓</span>
-                    <span class='news-item'>📈 [同花顺 2026-01-15 00:07:41] 我国科研团队首次直接观测到米格达尔效应，为轻暗物质探测迈出坚实的一步</span>
-                    <span class='news-item'>💼 [同花顺 2026-01-14 23:52:09] 纳指跌幅扩大至1.5% 标普500指数跌1%</span>
-                    <span class='news-item'>🏢 [同花顺 2026-01-14 23:49:51] 卡塔尔证实美军从乌代德空军基地撤人</span>
-                    <span class='news-item'>💡 [同花顺 2026-01-14 23:41:37] 四川证监局对振芯科技及谢俊等相关责任人员采取出具警示函措施</span>
-                    <span class='news-item'>⚡ [同花顺 2026-01-14 23:39:13] 越来越多期权投资者押注 美联储今年一整年都将维持利率不变</span>
-                    <span class='news-item'>🔔 [同花顺 2026-01-14 23:37:33] 喀麦隆西北大区发生袭击事件，致14人死亡</span>
-                    <span class='news-item'>📢 [同花顺 2026-01-14 23:16:49] 美最高法院未就特朗普政府关税合法性作出裁决</span>
+                    <span class='news-item'>📰 [财联社 00:18:00] </span>
+                    <span class='news-item'>📊 [财联社 00:21:00] 伊朗：骚乱事件主要幕后人员落网</span>
+                    <span class='news-item'>💹 [财联社 00:25:46] </span>
+                    <span class='news-item'>📈 [财联社 00:27:35] 第五次苏丹和平协商机制会议在开罗举行</span>
+                    <span class='news-item'>💼 [财联社 00:33:19] </span>
+                    <span class='news-item'>🏢 [财联社 00:35:54] 伊朗外长重申将维护国家主权 反对任何外来干预</span>
+                    <span class='news-item'>💡 [财联社 00:39:10] 欧洲主要股指收盘多数下跌</span>
+                    <span class='news-item'>⚡ [财联社 00:46:13] 柬埔寨：泰国要求推迟联合边界委员会特别会议</span>
+                    <span class='news-item'>🔔 [财联社 00:51:07] 卡塔尔证实美军从乌代德空军基地撤人</span>
+                    <span class='news-item'>📢 [财联社 00:55:06] Pimco称席卷新兴市场的上涨行情将持续“多年”</span>
+                    <span class='news-item'>📰 [财联社 00:55:29] 美国驻沙特使馆要求工作人员“提高警惕”</span>
+                    <span class='news-item'>📊 [财联社 01:00:27] 美方宣布启动加沙停火第二阶段</span>
+                    <span class='news-item'>💹 [财联社 01:00:48] </span>
+                    <span class='news-item'>📈 [财联社 01:03:23] 沪锡夜盘收涨约9.2%</span>
+                    <span class='news-item'>💼 [财联社 01:07:51] 日本监管机构将对涉嫌数据造假的电力企业实施现场检查</span>
+                    <span class='news-item'>🏢 [财联社 01:14:12] </span>
+                    <span class='news-item'>💡 [财联社 01:16:46] </span>
+                    <span class='news-item'>⚡ [财联社 01:18:52] 英国从卡塔尔军事基地撤人</span>
+                    <span class='news-item'>🔔 [财联社 01:24:47] </span>
+                    <span class='news-item'>📢 [财联社 01:25:34] 法国政府在议会不信任投票中过关</span>
+                    <span class='news-item'>📰 [同花顺 2026-01-15 01:26:03] 法国政府在议会不信任投票中过关</span>
+                    <span class='news-item'>📊 [同花顺 2026-01-15 01:09:03] 日本监管机构将对涉嫌数据造假的电力企业实施现场检查</span>
+                    <span class='news-item'>💹 [同花顺 2026-01-15 01:05:43] 美国务院证实将暂停办理75个国家的所有签证</span>
+                    <span class='news-item'>📈 [同花顺 2026-01-15 01:04:05] 美方宣布启动加沙停火第二阶段</span>
+                    <span class='news-item'>💼 [同花顺 2026-01-15 01:02:17] 国内金属期货夜盘涨跌不一</span>
+                    <span class='news-item'>🏢 [同花顺 2026-01-15 00:59:49] 欧佩克：今明两年全球日均石油需求均将同比增加</span>
+                    <span class='news-item'>💡 [同花顺 2026-01-15 00:55:57] 美国驻沙特使馆要求工作人员“提高警惕”</span>
+                    <span class='news-item'>⚡ [同花顺 2026-01-15 00:46:50] 柬埔寨：泰国要求推迟联合边界委员会特别会议</span>
+                    <span class='news-item'>🔔 [同花顺 2026-01-15 00:39:37] 俄总统普京同巴西总统卢拉通话，讨论委内瑞拉局势</span>
+                    <span class='news-item'>📢 [同花顺 2026-01-15 00:36:18] 伊朗外长重申将维护国家主权 反对任何外来干预</span>
+                    <span class='news-item'>📰 [同花顺 2026-01-15 00:28:44] 俄旅游业：美禁发签证“不会造成灾难”</span>
+                    <span class='news-item'>📊 [同花顺 2026-01-15 00:26:12] 埃及主办第五次苏丹和平协商机制会议</span>
+                    <span class='news-item'>💹 [同花顺 2026-01-15 00:22:06] 伊朗：骚乱事件主要幕后人员落网</span>
+                    <span class='news-item'>📈 [同花顺 2026-01-15 00:20:37] 美联储理事米兰重申今年需要降息150个基点</span>
+                    <span class='news-item'>💼 [同花顺 2026-01-15 00:20:31] 武汉华日精密激光股份有限公司启动上市辅导</span>
+                    <span class='news-item'>🏢 [同花顺 2026-01-15 00:20:22] 北京智同精密传动科技股份有限公司启动上市辅导</span>
+                    <span class='news-item'>💡 [同花顺 2026-01-15 00:16:22] 普京同卢拉通电话讨论委内瑞拉局势</span>
+                    <span class='news-item'>⚡ [同花顺 2026-01-15 00:10:50] 消息人士称美方将公布加沙战后治理架构</span>
+                    <span class='news-item'>🔔 [同花顺 2026-01-15 00:07:53] 离岸人民币兑美元升破6.97</span>
+                    <span class='news-item'>📢 [同花顺 2026-01-15 00:07:48] 花旗警告称特朗普设置信用卡利率上限的想法可能导致经济放缓</span>
+                    <span class='news-item'>📰 [财联社 00:18:00] </span>
+                    <span class='news-item'>📊 [财联社 00:21:00] 伊朗：骚乱事件主要幕后人员落网</span>
+                    <span class='news-item'>💹 [财联社 00:25:46] </span>
+                    <span class='news-item'>📈 [财联社 00:27:35] 第五次苏丹和平协商机制会议在开罗举行</span>
+                    <span class='news-item'>💼 [财联社 00:33:19] </span>
+                    <span class='news-item'>🏢 [财联社 00:35:54] 伊朗外长重申将维护国家主权 反对任何外来干预</span>
+                    <span class='news-item'>💡 [财联社 00:39:10] 欧洲主要股指收盘多数下跌</span>
+                    <span class='news-item'>⚡ [财联社 00:46:13] 柬埔寨：泰国要求推迟联合边界委员会特别会议</span>
+                    <span class='news-item'>🔔 [财联社 00:51:07] 卡塔尔证实美军从乌代德空军基地撤人</span>
+                    <span class='news-item'>📢 [财联社 00:55:06] Pimco称席卷新兴市场的上涨行情将持续“多年”</span>
+                    <span class='news-item'>📰 [财联社 00:55:29] 美国驻沙特使馆要求工作人员“提高警惕”</span>
+                    <span class='news-item'>📊 [财联社 01:00:27] 美方宣布启动加沙停火第二阶段</span>
+                    <span class='news-item'>💹 [财联社 01:00:48] </span>
+                    <span class='news-item'>📈 [财联社 01:03:23] 沪锡夜盘收涨约9.2%</span>
+                    <span class='news-item'>💼 [财联社 01:07:51] 日本监管机构将对涉嫌数据造假的电力企业实施现场检查</span>
+                    <span class='news-item'>🏢 [财联社 01:14:12] </span>
+                    <span class='news-item'>💡 [财联社 01:16:46] </span>
+                    <span class='news-item'>⚡ [财联社 01:18:52] 英国从卡塔尔军事基地撤人</span>
+                    <span class='news-item'>🔔 [财联社 01:24:47] </span>
+                    <span class='news-item'>📢 [财联社 01:25:34] 法国政府在议会不信任投票中过关</span>
+                    <span class='news-item'>📰 [同花顺 2026-01-15 01:26:03] 法国政府在议会不信任投票中过关</span>
+                    <span class='news-item'>📊 [同花顺 2026-01-15 01:09:03] 日本监管机构将对涉嫌数据造假的电力企业实施现场检查</span>
+                    <span class='news-item'>💹 [同花顺 2026-01-15 01:05:43] 美国务院证实将暂停办理75个国家的所有签证</span>
+                    <span class='news-item'>📈 [同花顺 2026-01-15 01:04:05] 美方宣布启动加沙停火第二阶段</span>
+                    <span class='news-item'>💼 [同花顺 2026-01-15 01:02:17] 国内金属期货夜盘涨跌不一</span>
+                    <span class='news-item'>🏢 [同花顺 2026-01-15 00:59:49] 欧佩克：今明两年全球日均石油需求均将同比增加</span>
+                    <span class='news-item'>💡 [同花顺 2026-01-15 00:55:57] 美国驻沙特使馆要求工作人员“提高警惕”</span>
+                    <span class='news-item'>⚡ [同花顺 2026-01-15 00:46:50] 柬埔寨：泰国要求推迟联合边界委员会特别会议</span>
+                    <span class='news-item'>🔔 [同花顺 2026-01-15 00:39:37] 俄总统普京同巴西总统卢拉通话，讨论委内瑞拉局势</span>
+                    <span class='news-item'>📢 [同花顺 2026-01-15 00:36:18] 伊朗外长重申将维护国家主权 反对任何外来干预</span>
+                    <span class='news-item'>📰 [同花顺 2026-01-15 00:28:44] 俄旅游业：美禁发签证“不会造成灾难”</span>
+                    <span class='news-item'>📊 [同花顺 2026-01-15 00:26:12] 埃及主办第五次苏丹和平协商机制会议</span>
+                    <span class='news-item'>💹 [同花顺 2026-01-15 00:22:06] 伊朗：骚乱事件主要幕后人员落网</span>
+                    <span class='news-item'>📈 [同花顺 2026-01-15 00:20:37] 美联储理事米兰重申今年需要降息150个基点</span>
+                    <span class='news-item'>💼 [同花顺 2026-01-15 00:20:31] 武汉华日精密激光股份有限公司启动上市辅导</span>
+                    <span class='news-item'>🏢 [同花顺 2026-01-15 00:20:22] 北京智同精密传动科技股份有限公司启动上市辅导</span>
+                    <span class='news-item'>💡 [同花顺 2026-01-15 00:16:22] 普京同卢拉通电话讨论委内瑞拉局势</span>
+                    <span class='news-item'>⚡ [同花顺 2026-01-15 00:10:50] 消息人士称美方将公布加沙战后治理架构</span>
+                    <span class='news-item'>🔔 [同花顺 2026-01-15 00:07:53] 离岸人民币兑美元升破6.97</span>
+                    <span class='news-item'>📢 [同花顺 2026-01-15 00:07:48] 花旗警告称特朗普设置信用卡利率上限的想法可能导致经济放缓</span>
                 </div>
             </div>
         </div>
@@ -738,10 +742,9 @@
             
     
             <div class="lianban-section">
-                <h2>🔥 连板股票分类</h2>
                 <div class="lianban-cards">
             
-                    <div class="lianban-card">
+                    <div class="lianban-card" style="background-color: #e3ddd7;">
                         <div class="lianban-title">2连板</div>
                         <div class="lianban-count">共 5 只</div>
                         <div class="lianban-stocks">
@@ -779,7 +782,7 @@
                         </div>
                     </div>
                 
-                    <div class="lianban-card">
+                    <div class="lianban-card" style="background-color: #d7e3de;">
                         <div class="lianban-title">3连板</div>
                         <div class="lianban-count">共 9 只</div>
                         <div class="lianban-stocks">
@@ -841,7 +844,7 @@
                         </div>
                     </div>
                 
-                    <div class="lianban-card">
+                    <div class="lianban-card" style="background-color: #d7e1e3;">
                         <div class="lianban-title">4连板</div>
                         <div class="lianban-count">共 4 只</div>
                         <div class="lianban-stocks">
@@ -873,7 +876,7 @@
                         </div>
                     </div>
                 
-                    <div class="lianban-card">
+                    <div class="lianban-card" style="background-color: #ded7e3;">
                         <div class="lianban-title">5连板</div>
                         <div class="lianban-count">共 1 只</div>
                         <div class="lianban-stocks">

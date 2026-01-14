@@ -565,34 +565,28 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             }}
             .lianban-section {{
                 margin-bottom: 30px;
-            }}
-            .lianban-section h2 {{
-                color: #2c3e50;
-                margin-bottom: 20px;
-                font-size: 1.5rem;
-                font-weight: 600;
+                background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
                 border-bottom: 2px solid #e0e0e0;
-                padding-bottom: 10px;
+                padding-bottom: 25px;
             }}
             .lianban-cards {{
                 display: flex;
-                gap: 20px;
-                flex-wrap: wrap;
+                gap: 10px;
+                flex-wrap: nowrap;
+                width: 100%;
             }}
             .lianban-card {{
                 flex: 1;
-                min-width: 280px;
-                max-width: 350px;
+                min-width: 0;
+                max-width: none;
                 background: white;
-                border-radius: 12px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+                border-radius: 0;
+                box-shadow: none;
                 padding: 20px;
                 transition: all 0.3s ease;
-                border-left: 4px solid #e74c3c;
             }}
             .lianban-card:hover {{
-                box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-                transform: translateY(-5px);
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
             }}
             .lianban-title {{
                 font-size: 1.8rem;
@@ -645,6 +639,16 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             }}
             .stock-change.negative {{
                 color: #27ae60;
+            }}
+            @media (max-width: 1200px) {{
+                .lianban-card {{
+                    flex: 1 1 calc(50% - 20px);
+                }}
+            }}
+            @media (max-width: 768px) {{
+                .lianban-card {{
+                    flex: 1 1 100%;
+                }}
             }}
         </style>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
@@ -898,11 +902,15 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             
             html += """
             <div class="lianban-section">
-                <h2>🔥 连板股票分类</h2>
                 <div class="lianban-cards">
             """
             
             for lianban_num, group in sorted(lianban_groups):
+                # 为每个连板数分配不同底色（低饱和度）
+                colors = ['#e3ddd7', '#d7e3de', '#d7e1e3', '#ded7e3']
+                color_idx = (lianban_num - 2) % len(colors)
+                bg_color = colors[color_idx]
+                
                 stocks_list = []
                 for _, row in group.iterrows():
                     stocks_list.append(f"""
@@ -914,7 +922,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     """)
                 
                 html += f"""
-                    <div class="lianban-card">
+                    <div class="lianban-card" style="background-color: {bg_color};">
                         <div class="lianban-title">{lianban_num}连板</div>
                         <div class="lianban-count">共 {len(group)} 只</div>
                         <div class="lianban-stocks">

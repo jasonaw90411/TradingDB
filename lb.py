@@ -367,6 +367,14 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
                 }}
             }}
             
+            function refreshCurrentPage() {{
+                const activeNavItem = document.querySelector('.nav-item.active');
+                if (activeNavItem) {{
+                    const pageId = activeNavItem.onclick.toString().match(/'([^']+)'/)[1];
+                    showPage(pageId);
+                }}
+            }}
+
             function initCharts() {{
             // 上涨下跌饼图
             const upDownCtx = document.getElementById('upDownChart').getContext('2d');
@@ -493,7 +501,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
                 <h1>🚀 涨停股池数据</h1>
                 <p class="subtitle">实时更新的涨停板行情数据</p>
             </div>
-            <button class="refresh-btn" onclick="location.reload()">🔄 刷新数据</button>
+            <button class="refresh-btn" onclick="refreshCurrentPage()">🔄 刷新数据</button>
             <div class="container">
             <div id="limit-up-page" class="page-content">
             <div class="section">

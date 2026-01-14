@@ -6,6 +6,7 @@ import akshare as ak
 
 # 全局变量定义
 MIN_LIMIT_UP_DAYS = 3
+_market_data_cache = None
 
 # Akshare 原生函数
 def get_all_securities(types=None, date=None):
@@ -59,33 +60,60 @@ def get_concepts(stock_code, date=None):
         return pd.DataFrame()
 
 def get_valuation(stock_code, end_date=None, count=1, fields=None):
-    """获取股票估值数据（纯akshare实现）"""
+    """获取股票估值数据（使用ak.stock_zh_a_hist获取历史数据）"""
     try:
-        # akshare直接使用股票代码，不需要转换格式
-        symbol = stock_code
+        # 转换日期格式
+        if end_date:
+            if isinstance(end_date, str):
+                end_date_str = end_date.replace('-', '')
+            else:
+                end_date_str = end_date.strftime('%Y%m%d')
+        else:
+            end_date_str = datetime.now().strftime('%Y%m%d')
         
-        # 获取股票实时数据
-        df = ak.stock_zh_a_spot_em()
+        # 计算开始日期
+        start_date = (datetime.strptime(end_date_str, '%Y%m%d') - timedelta(days=10)).strftime('%Y%m%d')
+        
+        # 使用ak.stock_zh_a_hist获取历史数据
+        df = ak.stock_zh_a_hist(
+            symbol=stock_code, 
+            period="daily", 
+            start_date=start_date, 
+            end_date=end_date_str, 
+            adjust="qfq"
+        )
         
         if df.empty:
             return pd.DataFrame()
         
-        # 筛选指定股票
-        stock_data = df[df['代码'] == symbol]
-        
-        if stock_data.empty:
-            return pd.DataFrame()
+        # 按日期降序排序，获取最近的数据
+        df = df.sort_values('日期', ascending=False)
         
         # 转换为DataFrame
         result = pd.DataFrame()
         
         # 添加换手率
         if 'turnover_ratio' in fields or fields is None:
-            result['turnover_ratio'] = [stock_data.iloc[0].get('换手率', 0)]
+            result['turnover_ratio'] = [df.iloc[0].get('换手率', 0)]
         
-        # 添加流通市值
+        # 添加量比
+        if 'volume_ratio' in fields or fields is None:
+            result['volume_ratio'] = [df.iloc[0].get('量比', 0)]
+        
+        # 添加流通市值（从实时数据获取）
         if 'circulating_market_cap' in fields or fields is None:
-            result['circulating_market_cap'] = [stock_data.iloc[0].get('流通市值', 0)]
+            global _market_data_cache
+            if _market_data_cache is None:
+                _market_data_cache = ak.stock_zh_a_spot_em()
+            
+            if not _market_data_cache.empty:
+                stock_data = _market_data_cache[_market_data_cache['代码'] == stock_code]
+                if not stock_data.empty:
+                    result['circulating_market_cap'] = [stock_data.iloc[0].get('流通市值', 0)]
+                else:
+                    result['circulating_market_cap'] = [0]
+            else:
+                result['circulating_market_cap'] = [0]
         
         return result
     except Exception as e:
@@ -195,27 +223,24 @@ def get_daily_limit_up_stocks(date, stock_list, min_price_change=9.8):
         if zt_stocks.empty:
             return []
         
+        # 如果stock_list是DataFrame，转换为索引列表
+        if isinstance(stock_list, pd.DataFrame):
+            stock_codes = stock_list.index.tolist()
+        else:
+            stock_codes = stock_list
+        
         limit_up_stocks = []
         
         for _, row in zt_stocks.iterrows():
             stock_code = row['代码']
             
             # 只处理指定股票列表中的股票
-            if stock_code not in stock_list:
+            if stock_code not in stock_codes:
                 continue
             
-            # 获取概念板块信息
-            concept_names = []
-            try:
-                concept_df = get_concepts(stock_code)
-                if not concept_df.empty:
-                    # 处理概念板块数据
-                    if '概念板块' in concept_df.columns:
-                        concept_names = concept_df['概念板块'].tolist()
-                    elif '板块名称' in concept_df.columns:
-                        concept_names = concept_df['板块名称'].tolist()
-            except Exception as e:
-                print(f"获取股票 {stock_code} 概念板块失败: {str(e)}")
+            # 暂时跳过概念板块获取以提高性能
+            # 可以后续优化为批量获取
+            industry_board = '暂未获取'
             
             # 构造涨停股票信息
             limit_up_stocks.append({
@@ -226,7 +251,7 @@ def get_daily_limit_up_stocks(date, stock_list, min_price_change=9.8):
                 '涨跌幅(%)': round(row.get('涨跌幅', 0), 2),
                 '成交量': row.get('成交量', 0),
                 '成交额(万元)': round(row.get('成交额', 0) / 10000, 1),
-                '行业板块': ','.join(concept_names) if concept_names else '获取失败'
+                '行业板块': industry_board
             })
         
         return limit_up_stocks
@@ -298,41 +323,38 @@ def get_all_stocks(include_cy=False):
     
     try:
         # 获取所有股票代码
-        stocks = get_all_securities()
+        stocks_df = get_all_securities()
         
-        if stocks.empty:
-            return []
+        if stocks_df.empty:
+            return pd.DataFrame()
         
         # 筛选股票：根据参数决定是否包含创业板
-        sh_stocks = stocks[stocks['code'].str.startswith('6')]['code'].tolist()  # 上证
-        sz_main_stocks = stocks[stocks['code'].str.startswith('0')]['code'].tolist()  # 深证主板和中小板
+        sh_stocks = stocks_df[stocks_df['code'].str.startswith('6')]  # 上证
+        sz_main_stocks = stocks_df[stocks_df['code'].str.startswith('0')]  # 深证主板和中小板
         
-        all_stocks_pre = sh_stocks + sz_main_stocks
+        all_stocks_pre = pd.concat([sh_stocks, sz_main_stocks], ignore_index=True)
         
         # 如果包含创业板，添加创业板股票
         if include_cy:
-            cy_stocks = stocks[stocks['code'].str.startswith('3')]['code'].tolist()  # 创业板
-            all_stocks_pre.extend(cy_stocks)
+            cy_stocks = stocks_df[stocks_df['code'].str.startswith('3')]  # 创业板
+            all_stocks_pre = pd.concat([all_stocks_pre, cy_stocks], ignore_index=True)
         
         # 排除科创板(68开头)，创业板根据参数决定
         if include_cy:
-            all_stocks = [code for code in all_stocks_pre if not code.startswith('68')]
+            all_stocks = all_stocks_pre[~all_stocks_pre['code'].str.startswith('68')]
         else:
-            all_stocks = [code for code in all_stocks_pre if not code.startswith('68') and not code.startswith('3')]
+            all_stocks = all_stocks_pre[~all_stocks_pre['code'].str.startswith('68') & ~all_stocks_pre['code'].str.startswith('3')]
         
         # 过滤ST和*ST股票
-        filtered_stocks = []
-        for stock_code in all_stocks:
-            stock_name = stocks.loc[stocks['code'] == stock_code, 'name'].values[0]
-            # 检查股票名称是否包含'ST'或'*ST'
-            if 'ST' not in stock_name and '*ST' not in stock_name:
-                filtered_stocks.append(stock_code)
+        filtered_stocks = all_stocks[~all_stocks['name'].str.contains('ST|\\*ST', regex=True)]
         
-        all_stocks = filtered_stocks
-        return all_stocks
+        # 设置股票代码为索引
+        filtered_stocks = filtered_stocks.set_index('code')
+        
+        return filtered_stocks
     except Exception as e:
         print(f"获取股票列表时出错: {e}")
-        return []
+        return pd.DataFrame()
 
 
 def analyze_one_to_two_breakout(yesterday_limit_up, before_yesterday_limit_up, stocks):
@@ -381,7 +403,7 @@ def analyze_one_to_two_breakout(yesterday_limit_up, before_yesterday_limit_up, s
             market_cap = 0.0
             market_cap_data = get_valuation(stock_code, end_date=yesterday, count=1, fields=['circulating_market_cap'])
             if not market_cap_data.empty:
-                market_cap = market_cap_data['circulating_market_cap'].iloc[0]
+                market_cap = market_cap_data['circulating_market_cap'].iloc[0] / 100000000  # 转换为亿元
                 
             
             # 获取主力净买入数据
@@ -402,10 +424,10 @@ def analyze_one_to_two_breakout(yesterday_limit_up, before_yesterday_limit_up, s
             if market_cap > 20:
                 qualified_stocks.append({
                     '股票代码': stock_code,
-                    '股票名称': stock_info.display_name,
+                    '股票名称': stock_info['name'],
                     '涨跌幅(%)': stock['涨跌幅(%)'],
                     '换手率(%)': turnover_ratio,
-                    '流通盘(亿)': market_cap,
+                    '流通盘(亿)': round(market_cap, 2),
                     '行业板块': stock['行业板块'],
                     '封板时间': '获取失败',
                     '是否开板': '获取失败',
@@ -473,8 +495,27 @@ def display_results(stocks_df, days=None, min_rise_days=None):
 
 
 
-def generate_html_report(yesterday_limit_up, before_yesterday_limit_up, yesterday, before_yesterday):
+def generate_html_report(yesterday_limit_up, before_yesterday_limit_up, breakout_stocks, yesterday, before_yesterday):
     """生成HTML报告"""
+    
+    # 获取一进二打板策略选中的股票代码列表
+    breakout_codes = set()
+    if not breakout_stocks.empty:
+        breakout_codes = set(breakout_stocks['股票代码'].tolist())
+    
+    # 创建一进二打板股票信息字典
+    breakout_info = {}
+    if not breakout_stocks.empty:
+        for _, stock in breakout_stocks.iterrows():
+            breakout_info[stock['股票代码']] = {
+                '换手率(%)': stock['换手率(%)'],
+                '流通盘(亿)': stock['流通盘(亿)'],
+                '行业板块': stock['行业板块'],
+                '封板时间': stock['封板时间'],
+                '是否开板': stock['是否开板'],
+                '主力净买入(万元)': stock['主力净买入(万元)']
+            }
+    
     html = """
     <!DOCTYPE html>
     <html lang="zh-CN">
@@ -529,10 +570,11 @@ def generate_html_report(yesterday_limit_up, before_yesterday_limit_up, yesterda
             }}
             .container {{
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
                 gap: 25px;
-                max-width: 1400px;
+                max-width: 1600px;
                 margin: 0 auto;
+                width: 100%;
             }}
             .section {{
                 background: white;
@@ -554,6 +596,7 @@ def generate_html_report(yesterday_limit_up, before_yesterday_limit_up, yesterda
             }}
             .table-container {{
                 max-height: 600px;
+                overflow-x: auto;
                 overflow-y: auto;
                 border-radius: 8px;
                 border: 1px solid #e0e0e0;
@@ -561,23 +604,27 @@ def generate_html_report(yesterday_limit_up, before_yesterday_limit_up, yesterda
             table {{
                 width: 100%;
                 border-collapse: collapse;
+                min-width: 800px;
             }}
             th {{
                 background: #f8f9fa;
                 color: #2c3e50;
-                padding: 12px 15px;
+                padding: 10px 12px;
                 text-align: left;
                 font-weight: 600;
                 position: sticky;
                 top: 0;
                 z-index: 10;
                 border-bottom: 2px solid #e0e0e0;
+                font-size: 13px;
+                white-space: nowrap;
             }}
             td {{
-                padding: 12px 15px;
+                padding: 10px 12px;
                 text-align: left;
                 border-bottom: 1px solid #f0f0f0;
                 color: #333;
+                font-size: 13px;
             }}
             tr:hover {{
                 background-color: #f8f9fa;
@@ -585,6 +632,25 @@ def generate_html_report(yesterday_limit_up, before_yesterday_limit_up, yesterda
             }}
             tr:nth-child(even) {{
                 background-color: #fafafa;
+            }}
+            tr.breakout-stock {{
+                background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%) !important;
+                border-left: 4px solid #667eea;
+            }}
+            tr.breakout-stock:hover {{
+                background: linear-gradient(135deg, #667eea25 0%, #764ba225 100%) !important;
+            }}
+            tr.breakout-stock td {{
+                font-weight: 600;
+            }}
+            .breakout-tag {{
+                display: inline-block;
+                padding: 4px 8px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-radius: 4px;
+                font-size: 0.85em;
+                font-weight: 600;
             }}
             /* Scrollbar styling */
             .table-container::-webkit-scrollbar {{
@@ -608,7 +674,7 @@ def generate_html_report(yesterday_limit_up, before_yesterday_limit_up, yesterda
     <body>
         <div class="header">
             <h1>A股涨停股票数据</h1>
-            <p class="subtitle">实时更新的涨停板数据统计</p>
+            <p class="subtitle">实时更新的涨停板数据统计 <span style="font-size: 0.9em; color: #667eea; font-weight: 600;">(一进二打板策略选中 {breakout_count} 只)</span></p>
         </div>
         <button class="refresh-btn" onclick="location.reload()">🔄 刷新数据</button>
         <div class="container">
@@ -623,23 +689,100 @@ def generate_html_report(yesterday_limit_up, before_yesterday_limit_up, yesterda
                             <th>涨跌幅(%)</th>
                             <th>成交量</th>
                             <th>成交额(万元)</th>
+                            <th>换手率(%)</th>
+                            <th>流通盘(亿)</th>
+                            <th>行业板块</th>
+                            <th>封板时间</th>
+                            <th>是否开板</th>
+                            <th>主力净买入(万元)</th>
                         </tr>
-        """.format(yesterday_str=yesterday.strftime('%Y-%m-%d') if yesterday else '日期获取失败', yesterday_count=len(yesterday_limit_up))
-        
+        """.format(breakout_count=len(breakout_codes), yesterday_str=yesterday.strftime('%Y-%m-%d') if yesterday else '日期获取失败', yesterday_count=len(yesterday_limit_up))
+    
     # 获取股票名称映射
     stocks = get_all_securities()
     stock_name_map = dict(zip(stocks['code'], stocks['name']))
     
+    # 为昨天的股票获取换手率和流通盘数据
+    yesterday_stock_info = {}
+    for stock in yesterday_limit_up:
+        stock_code = stock['股票代码']
+        try:
+            turnover_data = get_valuation(stock_code, end_date=yesterday, count=1, fields=['turnover_ratio', 'circulating_market_cap'])
+            if not turnover_data.empty:
+                turnover_ratio = turnover_data['turnover_ratio'].iloc[0]
+                market_cap = turnover_data['circulating_market_cap'].iloc[0] / 100000000
+                yesterday_stock_info[stock_code] = {
+                    '换手率(%)': turnover_ratio,
+                    '流通盘(亿)': round(market_cap, 2)
+                }
+        except Exception as e:
+            print(f"获取股票 {stock_code} 数据时出错: {e}")
+            yesterday_stock_info[stock_code] = {
+                '换手率(%)': '-',
+                '流通盘(亿)': '-'
+            }
+    
+    # 为前天的股票获取换手率和流通盘数据
+    before_yesterday_stock_info = {}
+    for stock in before_yesterday_limit_up:
+        stock_code = stock['股票代码']
+        try:
+            turnover_data = get_valuation(stock_code, end_date=before_yesterday, count=1, fields=['turnover_ratio', 'circulating_market_cap'])
+            if not turnover_data.empty:
+                turnover_ratio = turnover_data['turnover_ratio'].iloc[0]
+                market_cap = turnover_data['circulating_market_cap'].iloc[0] / 100000000
+                before_yesterday_stock_info[stock_code] = {
+                    '换手率(%)': turnover_ratio,
+                    '流通盘(亿)': round(market_cap, 2)
+                }
+        except Exception as e:
+            print(f"获取股票 {stock_code} 数据时出错: {e}")
+            before_yesterday_stock_info[stock_code] = {
+                '换手率(%)': '-',
+                '流通盘(亿)': '-'
+            }
+    
     # 添加最近一个交易日的数据
     for stock in yesterday_limit_up:
-        html += f"""
-                    <tr>
-                        <td>{stock['股票代码']}</td>
-                        <td>{stock_name_map.get(stock['股票代码'], '')}</td>
+        stock_code = stock['股票代码']
+        is_breakout = stock_code in breakout_codes
+        row_class = 'class="breakout-stock"' if is_breakout else ''
+        breakout_tag = '<span class="breakout-tag">一进二</span>' if is_breakout else ''
+        
+        if is_breakout and stock_code in breakout_info:
+            info = breakout_info[stock_code]
+            html += f"""
+                    <tr {row_class}>
+                        <td>{stock_code}</td>
+                        <td>{stock_name_map.get(stock_code, '')} {breakout_tag}</td>
                         <td>{stock['收盘价']}</td>
                         <td>{stock['涨跌幅(%)']}</td>
                         <td>{stock['成交量']}</td>
                         <td>{stock['成交额(万元)']}</td>
+                        <td>{info['换手率(%)']}</td>
+                        <td>{info['流通盘(亿)']}</td>
+                        <td>{info['行业板块']}</td>
+                        <td>{info['封板时间']}</td>
+                        <td>{info['是否开板']}</td>
+                        <td>{info['主力净买入(万元)']}</td>
+                    </tr>
+            """
+        else:
+            stock_info = yesterday_stock_info.get(stock_code, {'换手率(%)': '-', '流通盘(亿)': '-'})
+            html += f"""
+                    <tr {row_class}>
+                        <td>{stock_code}</td>
+                        <td>{stock_name_map.get(stock_code, '')} {breakout_tag}</td>
+                        <td>{stock['收盘价']}</td>
+                        <td>{stock['涨跌幅(%)']}</td>
+                        <td>{stock['成交量']}</td>
+                        <td>{stock['成交额(万元)']}</td>
+                        <td>{stock_info['换手率(%)']}</td>
+                        <td>{stock_info['流通盘(亿)']}</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
                     </tr>
             """
         
@@ -658,19 +801,56 @@ def generate_html_report(yesterday_limit_up, before_yesterday_limit_up, yesterda
                             <th>涨跌幅(%)</th>
                             <th>成交量</th>
                             <th>成交额(万元)</th>
+                            <th>换手率(%)</th>
+                            <th>流通盘(亿)</th>
+                            <th>行业板块</th>
+                            <th>封板时间</th>
+                            <th>是否开板</th>
+                            <th>主力净买入(万元)</th>
                         </tr>
         """.format(before_yesterday_str=before_yesterday.strftime('%Y-%m-%d') if before_yesterday else '日期获取失败', before_yesterday_count=len(before_yesterday_limit_up))
         
         # 添加前天的数据
     for stock in before_yesterday_limit_up:
-        html += f"""
-                    <tr>
-                        <td>{stock['股票代码']}</td>
-                        <td>{stock_name_map.get(stock['股票代码'], '')}</td>
+        stock_code = stock['股票代码']
+        is_breakout = stock_code in breakout_codes
+        row_class = 'class="breakout-stock"' if is_breakout else ''
+        breakout_tag = '<span class="breakout-tag">一进二</span>' if is_breakout else ''
+        
+        if is_breakout and stock_code in breakout_info:
+            info = breakout_info[stock_code]
+            html += f"""
+                    <tr {row_class}>
+                        <td>{stock_code}</td>
+                        <td>{stock_name_map.get(stock_code, '')} {breakout_tag}</td>
                         <td>{stock['收盘价']}</td>
                         <td>{stock['涨跌幅(%)']}</td>
                         <td>{stock['成交量']}</td>
                         <td>{stock['成交额(万元)']}</td>
+                        <td>{info['换手率(%)']}</td>
+                        <td>{info['流通盘(亿)']}</td>
+                        <td>{info['行业板块']}</td>
+                        <td>{info['封板时间']}</td>
+                        <td>{info['是否开板']}</td>
+                        <td>{info['主力净买入(万元)']}</td>
+                    </tr>
+            """
+        else:
+            stock_info = before_yesterday_stock_info.get(stock_code, {'换手率(%)': '-', '流通盘(亿)': '-'})
+            html += f"""
+                    <tr {row_class}>
+                        <td>{stock_code}</td>
+                        <td>{stock_name_map.get(stock_code, '')} {breakout_tag}</td>
+                        <td>{stock['收盘价']}</td>
+                        <td>{stock['涨跌幅(%)']}</td>
+                        <td>{stock['成交量']}</td>
+                        <td>{stock['成交额(万元)']}</td>
+                        <td>{stock_info['换手率(%)']}</td>
+                        <td>{stock_info['流通盘(亿)']}</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
                     </tr>
             """
         
@@ -711,8 +891,16 @@ if __name__ == "__main__":
         before_yesterday_limit_up = get_daily_limit_up_stocks(before_yesterday, all_stocks)
         print(f"前天涨停股票数量: {len(before_yesterday_limit_up)}")
         
+        # 分析一进二打板股票
+        result_df = analyze_one_to_two_breakout(yesterday_limit_up, before_yesterday_limit_up, all_stocks)
+        
+        # 显示结果
+        display_results(result_df)
+        
+        print(f"\n分析完成！找到 {len(result_df)} 只符合条件的一进二打板股票。")
+        
         # 生成HTML报告
-        html_content = generate_html_report(yesterday_limit_up, before_yesterday_limit_up, yesterday, before_yesterday)
+        html_content = generate_html_report(yesterday_limit_up, before_yesterday_limit_up, result_df, yesterday, before_yesterday)
         
         # 保存HTML文件
         html_file_path = "zt_stocks_report.html"
@@ -721,11 +909,3 @@ if __name__ == "__main__":
         
         print(f"\nHTML报告已生成: {html_file_path}")
         print("请在浏览器中打开该文件查看涨停股票数据")
-    
-    # 分析一进二打板股票
-    result_df = analyze_one_to_two_breakout(include_cy=False)
-    
-    # 显示结果
-    display_results(result_df)
-    
-    print(f"\n分析完成！找到 {len(result_df)} 只符合条件的一进二打板股票。")

@@ -1132,7 +1132,7 @@ if __name__ == "__main__":
         html_content = generate_html_report(yesterday_limit_up, before_yesterday_limit_up, yesterday, before_yesterday)
         
         # 保存HTML文件
-        html_file_path = "d:\\量化\\trading\\1进2\\zt_stocks_report.html"
+        html_file_path = "zt_stocks_report.html"
         with open(html_file_path, 'w', encoding='utf-8') as f:
             f.write(html_content)
         

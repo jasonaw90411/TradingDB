@@ -686,154 +686,143 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             </div>
             <div id="capital-flow-page" class="page-content" style="display: none;">
             <div class="section">
-                <h2> 概念资金流排行 <span style="font-size: 0.8em; color: #666;">3日排行</span></h2>
-                <div class="table-container" style="width: 100%;">
-                    <table>
-                        <tr>
-                            <th>排名</th>
-                            <th>概念板块</th>
-                            <th>公司家数</th>
-                            <th>流入资金(亿)</th>
-                            <th>流出资金(亿)</th>
-                            <th>净额(亿)</th>
-                            <th>阶段涨跌幅</th>
-                        </tr>
-                        """
+                <h2>📊 概念资金流排行</h2>
+                <div style="display: flex; gap: 20px; width: 100%; overflow-x: auto;">
+                    <div style="flex: 1; min-width: 300px;">
+                        <h3>3日排行</h3>
+                        <div class="table-container" style="width: 100%;">
+                            <table>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>概念板块</th>
+                                    <th>净额(亿)</th>
+                                    <th>阶段涨跌幅</th>
+                                </tr>
+                                """
     if capital_flow_data and "3日" in capital_flow_data and not capital_flow_data["3日"].empty:
-        for _, row in capital_flow_data["3日"].head(20).iterrows():
+        # 按净流入降序排列
+        sorted_df = capital_flow_data["3日"].sort_values(by="净额", ascending=False).head(20)
+        for idx, row in sorted_df.iterrows():
             html += f"""
-                        <tr>
-                            <td>{row['序号']}</td>
-                            <td>{row['行业']}</td>
-                            <td>{row['公司家数']}</td>
-                            <td>{row['流入资金']:.2f}</td>
-                            <td>{row['流出资金']:.2f}</td>
-                            <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                            <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
-                        </tr>
+                                <tr>
+                                    <td>{idx + 1}</td>
+                                    <td>{row['行业']}</td>
+                                    <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
+                                    <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                                </tr>
             """
     else:
         html += """
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
-                        </tr>
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                </tr>
         """
     html += """
-                    </table>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2>📊 概念资金流排行 <span style="font-size: 0.8em; color: #666;">5日排行</span></h2>
-                <div class="table-container" style="width: 100%;">
-                    <table>
-                        <tr>
-                            <th>排名</th>
-                            <th>概念板块</th>
-                            <th>公司家数</th>
-                            <th>流入资金(亿)</th>
-                            <th>流出资金(亿)</th>
-                            <th>净额(亿)</th>
-                            <th>阶段涨跌幅</th>
-                        </tr>
-                        """
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div style="flex: 1; min-width: 300px;">
+                        <h3>5日排行</h3>
+                        <div class="table-container" style="width: 100%;">
+                            <table>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>概念板块</th>
+                                    <th>净额(亿)</th>
+                                    <th>阶段涨跌幅</th>
+                                </tr>
+                                """
     if capital_flow_data and "5日" in capital_flow_data and not capital_flow_data["5日"].empty:
-        for _, row in capital_flow_data["5日"].head(20).iterrows():
+        # 按净流入降序排列
+        sorted_df = capital_flow_data["5日"].sort_values(by="净额", ascending=False).head(20)
+        for idx, row in sorted_df.iterrows():
             html += f"""
-                        <tr>
-                            <td>{row['序号']}</td>
-                            <td>{row['行业']}</td>
-                            <td>{row['公司家数']}</td>
-                            <td>{row['流入资金']:.2f}</td>
-                            <td>{row['流出资金']:.2f}</td>
-                            <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                            <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
-                        </tr>
+                                <tr>
+                                    <td>{idx + 1}</td>
+                                    <td>{row['行业']}</td>
+                                    <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
+                                    <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                                </tr>
             """
     else:
         html += """
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
-                        </tr>
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                </tr>
         """
     html += """
-                    </table>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2>📊 概念资金流排行 <span style="font-size: 0.8em; color: #666;">10日排行</span></h2>
-                <div class="table-container" style="width: 100%;">
-                    <table>
-                        <tr>
-                            <th>排名</th>
-                            <th>概念板块</th>
-                            <th>公司家数</th>
-                            <th>流入资金(亿)</th>
-                            <th>流出资金(亿)</th>
-                            <th>净额(亿)</th>
-                            <th>阶段涨跌幅</th>
-                        </tr>
-                        """
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div style="flex: 1; min-width: 300px;">
+                        <h3>10日排行</h3>
+                        <div class="table-container" style="width: 100%;">
+                            <table>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>概念板块</th>
+                                    <th>净额(亿)</th>
+                                    <th>阶段涨跌幅</th>
+                                </tr>
+                                """
     if capital_flow_data and "10日" in capital_flow_data and not capital_flow_data["10日"].empty:
-        for _, row in capital_flow_data["10日"].head(20).iterrows():
+        # 按净流入降序排列
+        sorted_df = capital_flow_data["10日"].sort_values(by="净额", ascending=False).head(20)
+        for idx, row in sorted_df.iterrows():
             html += f"""
-                        <tr>
-                            <td>{row['序号']}</td>
-                            <td>{row['行业']}</td>
-                            <td>{row['公司家数']}</td>
-                            <td>{row['流入资金']:.2f}</td>
-                            <td>{row['流出资金']:.2f}</td>
-                            <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                            <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
-                        </tr>
+                                <tr>
+                                    <td>{idx + 1}</td>
+                                    <td>{row['行业']}</td>
+                                    <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
+                                    <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                                </tr>
             """
     else:
         html += """
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
-                        </tr>
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                </tr>
         """
     html += """
-                    </table>
-                </div>
-            </div>
-            
-            <div class="section">
-                <h2>📊 概念资金流排行 <span style="font-size: 0.8em; color: #666;">20日排行</span></h2>
-                <div class="table-container" style="width: 100%;">
-                    <table>
-                        <tr>
-                            <th>排名</th>
-                            <th>概念板块</th>
-                            <th>公司家数</th>
-                            <th>流入资金(亿)</th>
-                            <th>流出资金(亿)</th>
-                            <th>净额(亿)</th>
-                            <th>阶段涨跌幅</th>
-                        </tr>
-                        """
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div style="flex: 1; min-width: 300px;">
+                        <h3>20日排行</h3>
+                        <div class="table-container" style="width: 100%;">
+                            <table>
+                                <tr>
+                                    <th>排名</th>
+                                    <th>概念板块</th>
+                                    <th>净额(亿)</th>
+                                    <th>阶段涨跌幅</th>
+                                </tr>
+                                """
     if capital_flow_data and "20日" in capital_flow_data and not capital_flow_data["20日"].empty:
-        for _, row in capital_flow_data["20日"].head(20).iterrows():
+        # 按净流入降序排列
+        sorted_df = capital_flow_data["20日"].sort_values(by="净额", ascending=False).head(20)
+        for idx, row in sorted_df.iterrows():
             html += f"""
-                        <tr>
-                            <td>{row['序号']}</td>
-                            <td>{row['行业']}</td>
-                            <td>{row['公司家数']}</td>
-                            <td>{row['流入资金']:.2f}</td>
-                            <td>{row['流出资金']:.2f}</td>
-                            <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                            <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
-                        </tr>
+                                <tr>
+                                    <td>{idx + 1}</td>
+                                    <td>{row['行业']}</td>
+                                    <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
+                                    <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                                </tr>
             """
     else:
         html += """
-                        <tr>
-                            <td colspan="7" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
-                        </tr>
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                </tr>
         """
     html += """
-                    </table>
+                            </table>
+                        </div>
+                    </div>
                 </div>
             </div>
             </div>

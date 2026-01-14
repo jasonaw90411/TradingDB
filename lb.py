@@ -256,7 +256,6 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             table {{
                 width: 100%;
                 border-collapse: collapse;
-                min-width: 1000px;
             }}
             th {{
                 background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
@@ -687,16 +686,16 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             <div id="capital-flow-page" class="page-content" style="display: none;">
             <div class="section">
                 <h2>📊 概念资金流排行</h2>
-                <div style="display: flex; gap: 20px; width: 100%; overflow-x: auto;">
-                    <div style="flex: 1; min-width: 300px;">
+                <div style="display: flex; gap: 10px; width: 100%; overflow-x: auto;">
+                    <div style="flex: 1; min-width: 0;">
                         <h3>3日排行</h3>
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th>排名</th>
-                                    <th>概念板块</th>
-                                    <th>净额(亿)</th>
-                                    <th>阶段涨跌幅</th>
+                                    <th style="width: 15%;">排名</th>
+                                    <th style="width: 55%;">概念板块</th>
+                                    <th style="width: 15%;">净额(亿)</th>
+                                    <th style="width: 15%;">阶段涨跌幅</th>
                                 </tr>
                                 """
     if capital_flow_data and "3日" in capital_flow_data and not capital_flow_data["3日"].empty:
@@ -722,15 +721,15 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         </div>
                     </div>
                     
-                    <div style="flex: 1; min-width: 300px;">
+                    <div style="flex: 1;">
                         <h3>5日排行</h3>
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th>排名</th>
-                                    <th>概念板块</th>
-                                    <th>净额(亿)</th>
-                                    <th>阶段涨跌幅</th>
+                                    <th style="width: 15%;">排名</th>
+                                    <th style="width: 55%;">概念板块</th>
+                                    <th style="width: 15%;">净额(亿)</th>
+                                    <th style="width: 15%;">阶段涨跌幅</th>
                                 </tr>
                                 """
     if capital_flow_data and "5日" in capital_flow_data and not capital_flow_data["5日"].empty:
@@ -756,15 +755,15 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         </div>
                     </div>
                     
-                    <div style="flex: 1; min-width: 300px;">
+                    <div style="flex: 1; min-width: 0;">
                         <h3>10日排行</h3>
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th>排名</th>
-                                    <th>概念板块</th>
-                                    <th>净额(亿)</th>
-                                    <th>阶段涨跌幅</th>
+                                    <th style="width: 15%;">排名</th>
+                                    <th style="width: 55%;">概念板块</th>
+                                    <th style="width: 15%;">净额(亿)</th>
+                                    <th style="width: 15%;">阶段涨跌幅</th>
                                 </tr>
                                 """
     if capital_flow_data and "10日" in capital_flow_data and not capital_flow_data["10日"].empty:
@@ -790,15 +789,15 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         </div>
                     </div>
                     
-                    <div style="flex: 1; min-width: 300px;">
+                    <div style="flex: 1;">
                         <h3>20日排行</h3>
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th>排名</th>
-                                    <th>概念板块</th>
-                                    <th>净额(亿)</th>
-                                    <th>阶段涨跌幅</th>
+                                    <th style="width: 15%;">排名</th>
+                                    <th style="width: 55%;">概念板块</th>
+                                    <th style="width: 15%;">净额(亿)</th>
+                                    <th style="width: 15%;">阶段涨跌幅</th>
                                 </tr>
                                 """
     if capital_flow_data and "20日" in capital_flow_data and not capital_flow_data["20日"].empty:

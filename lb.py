@@ -857,64 +857,6 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     </table>
                 </div>
             </div>
-            <div class="section">
-                <h2>📊 昨日涨停股池 - """ + yesterday_str + """ <span style="font-size: 0.8em; color: #666;">(共 """ + str(len(yesterday_pool)) + """ 只)</span></h2>
-                <div class="table-container">
-                    <table>
-                        <tr>
-                            <th>序号</th>
-                            <th>代码</th>
-                            <th>名称</th>
-                            <th>涨跌幅(%)</th>
-                            <th>最新价</th>
-                            <th>涨停价</th>
-                            <th>成交额(亿)</th>
-                            <th>流通市值(亿)</th>
-                            <th>总市值(亿)</th>
-                            <th>换手率(%)</th>
-                            <th>涨速(%)</th>
-                            <th>振幅(%)</th>
-                            <th>昨日封板时间</th>
-                            <th>昨日连板数</th>
-                            <th>涨停统计</th>
-                            <th>所属行业</th>
-                        </tr>
-    """
-    
-    if not yesterday_pool.empty:
-        for _, row in yesterday_pool.iterrows():
-            change_class = 'positive' if row['涨跌幅'] > 0 else 'negative'
-            html += f"""
-                        <tr>
-                            <td>{int(row['序号'])}</td>
-                            <td>{row['代码']}</td>
-                            <td>{row['名称']}</td>
-                            <td class="{change_class}">{row['涨跌幅']:.2f}</td>
-                            <td>{row['最新价']:.2f}</td>
-                            <td>{row['涨停价']:.2f}</td>
-                            <td>{row['成交额']/100000000:.2f}</td>
-                            <td>{row['流通市值']/100000000:.2f}</td>
-                            <td>{row['总市值']/100000000:.2f}</td>
-                            <td>{row['换手率']:.2f}</td>
-                            <td>{row['涨速']:.2f}</td>
-                            <td>{row['振幅']:.2f}</td>
-                            <td>{format_time(row['昨日封板时间'])}</td>
-                            <td>{int(row['昨日连板数'])}</td>
-                            <td>{row['涨停统计']}</td>
-                            <td>{row['所属行业']}</td>
-                        </tr>
-            """
-    else:
-        html += """
-                        <tr>
-                            <td colspan="16" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
-                        </tr>
-        """
-    
-    html += """
-                    </table>
-                </div>
-            </div>
             </div>
             <div id="capital-flow-page" class="page-content" style="display: none;">
             <div class="section">

@@ -179,6 +179,71 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 min-height: 100vh;
                 padding: 0;
                 display: flex;
+                margin: 0;
+            }}
+            .news-ticker {{
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 55px;
+                background: linear-gradient(90deg, #1a252f 0%, #2c3e50 100%);
+                color: white;
+                display: flex;
+                align-items: center;
+                overflow: hidden;
+                z-index: 1000;
+                border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            }}
+            .news-label {{
+                background: #e74c3c;
+                color: white;
+                padding: 0 20px;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                font-weight: 600;
+                font-size: 16px;
+                white-space: nowrap;
+                z-index: 10;
+            }}
+            .news-content {{
+                flex: 1;
+                overflow: hidden;
+                position: relative;
+                height: 100%;
+                display: flex;
+                align-items: center;
+            }}
+            .news-scroll {{
+                display: flex;
+                animation: scroll 30s linear infinite;
+                white-space: nowrap;
+            }}
+            .news-scroll:hover {{
+                animation-play-state: paused;
+            }}
+            .news-item {{
+                display: inline-block;
+                padding: 0 40px;
+                font-size: 16px;
+                color: rgba(255, 255, 255, 0.95);
+            }}
+            .news-item a {{
+                color: rgba(255, 255, 255, 0.9);
+                text-decoration: none;
+                transition: color 0.3s ease;
+            }}
+            .news-item a:hover {{
+                color: #3498db;
+            }}
+            @keyframes scroll {{
+                0% {{
+                    transform: translateX(0);
+                }}
+                100% {{
+                    transform: translateX(-50%);
+                }}
             }}
             .sidebar {{
                 width: 250px;
@@ -191,6 +256,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 height: 100vh;
                 overflow-y: auto;
                 border-right: 1px solid rgba(255, 255, 255, 0.1);
+                top: 55px;
             }}
             .sidebar-title {{
                 color: white;
@@ -230,6 +296,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 flex: 1;
                 margin-left: 250px;
                 padding: 20px;
+                margin-top: 55px;
             }}
             .header {{
                 text-align: center;
@@ -633,6 +700,23 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
         </script>
     </head>
     <body>
+        <div class="news-ticker">
+            <div class="news-label">📰 财经快讯</div>
+            <div class="news-content">
+                <div class="news-scroll" id="newsScroll">
+                    <span class="news-item">📈 沪指今日收涨0.5%，创业板指涨1.2%</span>
+                    <span class="news-item">💰 北向资金净流入50亿元，连续3日净买入</span>
+                    <span class="news-item">🚀 新能源板块强势领涨，多股涨停</span>
+                    <span class="news-item">📊 央行今日开展1000亿元逆回购操作</span>
+                    <span class="news-item">🔥 科技股持续活跃，人工智能概念受关注</span>
+                    <span class="news-item">📈 沪指今日收涨0.5%，创业板指涨1.2%</span>
+                    <span class="news-item">💰 北向资金净流入50亿元，连续3日净买入</span>
+                    <span class="news-item">🚀 新能源板块强势领涨，多股涨停</span>
+                    <span class="news-item">📊 央行今日开展1000亿元逆回购操作</span>
+                    <span class="news-item">🔥 科技股持续活跃，人工智能概念受关注</span>
+                </div>
+            </div>
+        </div>
         <div class="sidebar">
             <div class="sidebar-title">📊 复盘助手</div>
             <div class="nav-menu">
@@ -1272,397 +1356,6 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
     
     return html
 
-
-def generate_html_report(yesterday_limit_up, before_yesterday_limit_up, breakout_stocks, yesterday, before_yesterday):
-    """生成HTML报告"""
-    
-    # 获取一进二打板策略选中的股票代码列表
-    breakout_codes = set()
-    if not breakout_stocks.empty:
-        breakout_codes = set(breakout_stocks['股票代码'].tolist())
-    
-    # 创建一进二打板股票信息字典
-    breakout_info = {}
-    if not breakout_stocks.empty:
-        for _, stock in breakout_stocks.iterrows():
-            breakout_info[stock['股票代码']] = {
-                '换手率(%)': stock['换手率(%)'],
-                '流通盘(亿)': stock['流通盘(亿)'],
-                '行业板块': stock['行业板块'],
-                '封板时间': stock['封板时间'],
-                '是否开板': stock['是否开板'],
-                '主力净买入(万元)': stock['主力净买入(万元)']
-            }
-    
-    html = """
-    <!DOCTYPE html>
-    <html lang="zh-CN">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>涨停股票数据</title>
-        <style>
-            * {{
-                margin: 0;
-                padding: 0;
-                box-sizing: border-box;
-                font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-            }}
-            body {{
-                font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-                background: #f5f5f7;
-                min-height: 100vh;
-                padding: 20px;
-            }}
-            .header {{
-                text-align: center;
-                margin-bottom: 30px;
-                color: #333;
-            }}
-            h1 {{
-                font-size: 2.5rem;
-                font-weight: 700;
-                margin-bottom: 10px;
-                color: #2c3e50;
-            }}
-            .subtitle {{
-                font-size: 1.1rem;
-                color: #666;
-            }}
-            .refresh-btn {{
-                display: block;
-                margin: 0 auto 30px;
-                padding: 12px 30px;
-                background: #34495e;
-                color: white;
-                border: none;
-                border-radius: 8px;
-                cursor: pointer;
-                font-size: 16px;
-                font-weight: 600;
-                transition: all 0.3s ease;
-            }}
-            .refresh-btn:hover {{
-                background: #2c3e50;
-                transform: translateY(-2px);
-            }}
-            .container {{
-                display: flex;
-                flex-direction: column;
-                gap: 25px;
-                max-width: 95%;
-                margin: 0 auto;
-                width: 100%;
-            }}
-            .section {{
-                background: white;
-                border-radius: 12px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-                padding: 25px;
-                transition: all 0.3s ease;
-            }}
-            .section:hover {{
-                box-shadow: 0 8px 20px rgba(0,0,0,0.12);
-            }}
-            h2 {{
-                color: #2c3e50;
-                margin-bottom: 20px;
-                font-size: 1.5rem;
-                font-weight: 600;
-                border-bottom: 2px solid #e0e0e0;
-                padding-bottom: 10px;
-            }}
-            .table-container {{
-                max-height: 600px;
-                overflow-x: auto;
-                overflow-y: auto;
-                border-radius: 8px;
-                border: 1px solid #e0e0e0;
-            }}
-            table {{
-                width: 100%;
-                border-collapse: collapse;
-                min-width: 800px;
-            }}
-            th {{
-                background: #f8f9fa;
-                color: #2c3e50;
-                padding: 10px 12px;
-                text-align: left;
-                font-weight: 600;
-                position: sticky;
-                top: 0;
-                z-index: 10;
-                border-bottom: 2px solid #e0e0e0;
-                font-size: 13px;
-                white-space: nowrap;
-            }}
-            td {{
-                padding: 10px 12px;
-                text-align: left;
-                border-bottom: 1px solid #f0f0f0;
-                color: #333;
-                font-size: 13px;
-            }}
-            tr:hover {{
-                background-color: #f8f9fa;
-                transition: all 0.2s ease;
-            }}
-            tr:nth-child(even) {{
-                background-color: #fafafa;
-            }}
-            tr.breakout-stock {{
-                background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%) !important;
-                border-left: 4px solid #667eea;
-            }}
-            tr.breakout-stock:hover {{
-                background: linear-gradient(135deg, #667eea25 0%, #764ba225 100%) !important;
-            }}
-            tr.breakout-stock td {{
-                font-weight: 600;
-            }}
-            .breakout-tag {{
-                display: inline-block;
-                padding: 4px 8px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: white;
-                border-radius: 4px;
-                font-size: 0.85em;
-                font-weight: 600;
-            }}
-            /* Scrollbar styling */
-            .table-container::-webkit-scrollbar {{
-                width: 8px;
-            }}
-            .table-container::-webkit-scrollbar-track {{
-                background: #f1f1f1;
-                border-radius: 4px;
-            }}
-            .table-container::-webkit-scrollbar-thumb {{
-                background: #bdc3c7;
-                border-radius: 4px;
-            }}
-            .table-container::-webkit-scrollbar-thumb:hover {{
-                background: #7f8c8d;
-                border-radius: 4px;
-                transition: background 0.2s ease;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>A股涨停股票数据</h1>
-            <p class="subtitle">实时更新的涨停板数据统计 <span style="font-size: 0.9em; color: #667eea; font-weight: 600;">(一进二打板策略选中 {breakout_count} 只)</span></p>
-            <p class="refresh-time" style="color: #666; font-size: 0.9em; margin-top: 5px;"></p>
-        </div>
-        <button class="refresh-btn" onclick="location.reload(); updateRefreshTime();">🔄 刷新数据</button>
-        <script>
-            function updateRefreshTime() {{
-                const now = new Date();
-                const timeStr = now.toLocaleString('zh-CN', {{
-                    year: 'numeric',
-                    month: '2-digit',
-                    day: '2-digit',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    second: '2-digit'
-                }});
-                const refreshTimeElements = document.querySelectorAll('.refresh-time');
-                refreshTimeElements.forEach(element => {{
-                    element.textContent = '最后刷新: ' + timeStr;
-                }});
-            }}
-            window.onload = function() {{
-                updateRefreshTime();
-            }};
-        </script>
-        <div class="container">
-            <div class="section">
-                <h2>📈 最近一个交易日涨停股票 - {yesterday_str} <span style="font-size: 0.8em; color: #666;">(共 {yesterday_count} 只)</span></h2>
-                <div class="table-container">
-                    <table>
-                        <tr>
-                            <th>股票代码</th>
-                            <th>股票名称</th>
-                            <th>收盘价</th>
-                            <th>涨跌幅(%)</th>
-                            <th>成交量</th>
-                            <th>成交额(万元)</th>
-                            <th>换手率(%)</th>
-                            <th>流通盘(亿)</th>
-                            <th>行业板块</th>
-                            <th>封板时间</th>
-                            <th>是否开板</th>
-                            <th>主力净买入(万元)</th>
-                        </tr>
-        """.format(breakout_count=len(breakout_codes), yesterday_str=yesterday.strftime('%Y-%m-%d') if yesterday else '日期获取失败', yesterday_count=len(yesterday_limit_up))
-    
-    # 获取股票名称映射
-    stocks = get_all_securities()
-    stock_name_map = dict(zip(stocks['code'], stocks['name']))
-    
-    # 为昨天的股票获取换手率和流通盘数据
-    yesterday_stock_info = {}
-    for stock in yesterday_limit_up:
-        stock_code = stock['股票代码']
-        try:
-            turnover_data = get_valuation(stock_code, end_date=yesterday, count=1, fields=['turnover_ratio', 'circulating_market_cap'])
-            if not turnover_data.empty:
-                turnover_ratio = turnover_data['turnover_ratio'].iloc[0]
-                market_cap = turnover_data['circulating_market_cap'].iloc[0] / 100000000
-                yesterday_stock_info[stock_code] = {
-                    '换手率(%)': turnover_ratio,
-                    '流通盘(亿)': round(market_cap, 2)
-                }
-        except Exception as e:
-            print(f"获取股票 {stock_code} 数据时出错: {e}")
-            yesterday_stock_info[stock_code] = {
-                '换手率(%)': '-',
-                '流通盘(亿)': '-'
-            }
-    
-    # 为前天的股票获取换手率和流通盘数据
-    before_yesterday_stock_info = {}
-    for stock in before_yesterday_limit_up:
-        stock_code = stock['股票代码']
-        try:
-            turnover_data = get_valuation(stock_code, end_date=before_yesterday, count=1, fields=['turnover_ratio', 'circulating_market_cap'])
-            if not turnover_data.empty:
-                turnover_ratio = turnover_data['turnover_ratio'].iloc[0]
-                market_cap = turnover_data['circulating_market_cap'].iloc[0] / 100000000
-                before_yesterday_stock_info[stock_code] = {
-                    '换手率(%)': turnover_ratio,
-                    '流通盘(亿)': round(market_cap, 2)
-                }
-        except Exception as e:
-            print(f"获取股票 {stock_code} 数据时出错: {e}")
-            before_yesterday_stock_info[stock_code] = {
-                '换手率(%)': '-',
-                '流通盘(亿)': '-'
-            }
-    
-    # 添加最近一个交易日的数据
-    for stock in yesterday_limit_up:
-        stock_code = stock['股票代码']
-        is_breakout = stock_code in breakout_codes
-        row_class = 'class="breakout-stock"' if is_breakout else ''
-        breakout_tag = '<span class="breakout-tag">一进二</span>' if is_breakout else ''
-        
-        if is_breakout and stock_code in breakout_info:
-            info = breakout_info[stock_code]
-            html += f"""
-                    <tr {row_class}>
-                        <td>{stock_code}</td>
-                        <td>{stock_name_map.get(stock_code, '')} {breakout_tag}</td>
-                        <td>{stock['收盘价']}</td>
-                        <td>{stock['涨跌幅(%)']}</td>
-                        <td>{stock['成交量']}</td>
-                        <td>{stock['成交额(万元)']}</td>
-                        <td>{info['换手率(%)']}</td>
-                        <td>{info['流通盘(亿)']}</td>
-                        <td>{info['行业板块']}</td>
-                        <td>{info['封板时间']}</td>
-                        <td>{info['是否开板']}</td>
-                        <td>{info['主力净买入(万元)']}</td>
-                    </tr>
-            """
-        else:
-            stock_info = yesterday_stock_info.get(stock_code, {'换手率(%)': '-', '流通盘(亿)': '-'})
-            html += f"""
-                    <tr {row_class}>
-                        <td>{stock_code}</td>
-                        <td>{stock_name_map.get(stock_code, '')} {breakout_tag}</td>
-                        <td>{stock['收盘价']}</td>
-                        <td>{stock['涨跌幅(%)']}</td>
-                        <td>{stock['成交量']}</td>
-                        <td>{stock['成交额(万元)']}</td>
-                        <td>{stock_info['换手率(%)']}</td>
-                        <td>{stock_info['流通盘(亿)']}</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                    </tr>
-            """
-        
-    html += """
-                </table>
-            </div>
-        </div>
-            <div class="section">
-                <h2>📊 前天涨停股票 - {before_yesterday_str} <span style="font-size: 0.8em; color: #666;">(共 {before_yesterday_count} 只)</span></h2>
-                <div class="table-container">
-                    <table>
-                        <tr>
-                            <th>股票代码</th>
-                            <th>股票名称</th>
-                            <th>收盘价</th>
-                            <th>涨跌幅(%)</th>
-                            <th>成交量</th>
-                            <th>成交额(万元)</th>
-                            <th>换手率(%)</th>
-                            <th>流通盘(亿)</th>
-                            <th>行业板块</th>
-                            <th>封板时间</th>
-                            <th>是否开板</th>
-                            <th>主力净买入(万元)</th>
-                        </tr>
-        """.format(before_yesterday_str=before_yesterday.strftime('%Y-%m-%d') if before_yesterday else '日期获取失败', before_yesterday_count=len(before_yesterday_limit_up))
-        
-        # 添加前天的数据
-    for stock in before_yesterday_limit_up:
-        stock_code = stock['股票代码']
-        is_breakout = stock_code in breakout_codes
-        row_class = 'class="breakout-stock"' if is_breakout else ''
-        breakout_tag = '<span class="breakout-tag">一进二</span>' if is_breakout else ''
-        
-        if is_breakout and stock_code in breakout_info:
-            info = breakout_info[stock_code]
-            html += f"""
-                    <tr {row_class}>
-                        <td>{stock_code}</td>
-                        <td>{stock_name_map.get(stock_code, '')} {breakout_tag}</td>
-                        <td>{stock['收盘价']}</td>
-                        <td>{stock['涨跌幅(%)']}</td>
-                        <td>{stock['成交量']}</td>
-                        <td>{stock['成交额(万元)']}</td>
-                        <td>{info['换手率(%)']}</td>
-                        <td>{info['流通盘(亿)']}</td>
-                        <td>{info['行业板块']}</td>
-                        <td>{info['封板时间']}</td>
-                        <td>{info['是否开板']}</td>
-                        <td>{info['主力净买入(万元)']}</td>
-                    </tr>
-            """
-        else:
-            stock_info = before_yesterday_stock_info.get(stock_code, {'换手率(%)': '-', '流通盘(亿)': '-'})
-            html += f"""
-                    <tr {row_class}>
-                        <td>{stock_code}</td>
-                        <td>{stock_name_map.get(stock_code, '')} {breakout_tag}</td>
-                        <td>{stock['收盘价']}</td>
-                        <td>{stock['涨跌幅(%)']}</td>
-                        <td>{stock['成交量']}</td>
-                        <td>{stock['成交额(万元)']}</td>
-                        <td>{stock_info['换手率(%)']}</td>
-                        <td>{stock_info['流通盘(亿)']}</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                        <td>-</td>
-                    </tr>
-            """
-        
-    html += """
-                    </table>
-                </div>
-            </div>
-        </div>
-    </body>
-</html>
-        """
-        
-    return html
 
 if __name__ == "__main__":
     # 获取今天和昨天的涨停股池数据

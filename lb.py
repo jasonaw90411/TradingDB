@@ -55,7 +55,43 @@ def get_board_industry_info():
         return pd.DataFrame()
 
 
-def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info):
+def get_capital_flow_data():
+    """获取资金流向数据"""
+    try:
+        # 获取即时资金流向
+        realtime_df = ak.stock_fund_flow_concept(symbol="即时")
+        print(f"成功获取即时资金流向数据，共 {len(realtime_df)} 个概念板块")
+        
+        # 获取3日排行
+        day3_df = ak.stock_fund_flow_concept(symbol="3日排行")
+        print(f"成功获取3日资金流向排行，共 {len(day3_df)} 个概念板块")
+        
+        # 获取5日排行
+        day5_df = ak.stock_fund_flow_concept(symbol="5日排行")
+        print(f"成功获取5日资金流向排行，共 {len(day5_df)} 个概念板块")
+        
+        # 获取10日排行
+        day10_df = ak.stock_fund_flow_concept(symbol="10日排行")
+        print(f"成功获取10日资金流向排行，共 {len(day10_df)} 个概念板块")
+        
+        # 获取20日排行
+        day20_df = ak.stock_fund_flow_concept(symbol="20日排行")
+        print(f"成功获取20日资金流向排行，共 {len(day20_df)} 个概念板块")
+        
+        return {
+            "即时": realtime_df,
+            "3日": day3_df,
+            "5日": day5_df,
+            "10日": day10_df,
+            "20日": day20_df
+        }
+    except Exception as e:
+        print(f"获取资金流向数据失败: {e}")
+        return {}
+
+
+
+def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data=None):
     # 获取股票市场活跃度数据
     try:
         market_activity = ak.stock_market_activity_legu()
@@ -357,6 +393,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             function showPage(pageId) {{
                 var limitUpPage = document.getElementById('limit-up-page');
                 var boardInfoPage = document.getElementById('board-info-page');
+                var capitalFlowPage = document.getElementById('capital-flow-page');
                 var navItems = document.querySelectorAll('.nav-item');
                 var headerTitle = document.querySelector('h1');
                 var headerSubtitle = document.querySelector('.subtitle');
@@ -364,18 +401,31 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 if (pageId === 'limit-up') {{
                     limitUpPage.style.display = 'block';
                     boardInfoPage.style.display = 'none';
+                    capitalFlowPage.style.display = 'none';
                     navItems[0].classList.remove('active');
-                    navItems[1].classList.add('active');
+                    navItems[1].classList.remove('active');
+                    navItems[2].classList.add('active');
                     headerTitle.textContent = '🚀 涨停股池数据';
                     headerSubtitle.textContent = '实时更新的涨停板行情数据';
                 }} else if (pageId === 'board-info') {{
                     limitUpPage.style.display = 'none';
                     boardInfoPage.style.display = 'block';
-                    navItems[0].classList.add('active');
-                    navItems[1].classList.remove('active');
+                    capitalFlowPage.style.display = 'none';
+                    navItems[0].classList.remove('active');
+                    navItems[1].classList.add('active');
+                    navItems[2].classList.remove('active');
                     headerTitle.textContent = '📊 概念板块信息';
                     headerSubtitle.textContent = '实时更新的概念板块行情数据';
                     initCharts();
+                }} else if (pageId === 'capital-flow') {{
+                    limitUpPage.style.display = 'none';
+                    boardInfoPage.style.display = 'none';
+                    capitalFlowPage.style.display = 'block';
+                    navItems[0].classList.add('active');
+                    navItems[1].classList.remove('active');
+                    navItems[2].classList.remove('active');
+                    headerTitle.textContent = '💰 资金流向数据';
+                    headerSubtitle.textContent = '实时更新的资金流向统计数据';
                 }}
             }}
             
@@ -504,6 +554,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
         <div class="sidebar">
             <div class="sidebar-title">📊 复盘助手</div>
             <div class="nav-menu">
+                <div class="nav-item" onclick="showPage('capital-flow')">💰 资金流向</div>
                 <div class="nav-item" onclick="showPage('board-info')">📊 板块信息</div>
                 <div class="nav-item active" onclick="showPage('limit-up')">📈 涨停股池数据</div>
             </div>
@@ -628,6 +679,159 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         </tr>
         """
     
+    html += """
+                    </table>
+                </div>
+            </div>
+            </div>
+            <div id="capital-flow-page" class="page-content" style="display: none;">
+            <div class="section">
+                <h2> 概念资金流排行 <span style="font-size: 0.8em; color: #666;">3日排行</span></h2>
+                <div class="table-container" style="width: 100%;">
+                    <table>
+                        <tr>
+                            <th>排名</th>
+                            <th>概念板块</th>
+                            <th>公司家数</th>
+                            <th>流入资金(亿)</th>
+                            <th>流出资金(亿)</th>
+                            <th>净额(亿)</th>
+                            <th>阶段涨跌幅</th>
+                        </tr>
+                        """
+    if capital_flow_data and "3日" in capital_flow_data and not capital_flow_data["3日"].empty:
+        for _, row in capital_flow_data["3日"].head(20).iterrows():
+            html += f"""
+                        <tr>
+                            <td>{row['序号']}</td>
+                            <td>{row['行业']}</td>
+                            <td>{row['公司家数']}</td>
+                            <td>{row['流入资金']:.2f}</td>
+                            <td>{row['流出资金']:.2f}</td>
+                            <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
+                            <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                        </tr>
+            """
+    else:
+        html += """
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                        </tr>
+        """
+    html += """
+                    </table>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📊 概念资金流排行 <span style="font-size: 0.8em; color: #666;">5日排行</span></h2>
+                <div class="table-container" style="width: 100%;">
+                    <table>
+                        <tr>
+                            <th>排名</th>
+                            <th>概念板块</th>
+                            <th>公司家数</th>
+                            <th>流入资金(亿)</th>
+                            <th>流出资金(亿)</th>
+                            <th>净额(亿)</th>
+                            <th>阶段涨跌幅</th>
+                        </tr>
+                        """
+    if capital_flow_data and "5日" in capital_flow_data and not capital_flow_data["5日"].empty:
+        for _, row in capital_flow_data["5日"].head(20).iterrows():
+            html += f"""
+                        <tr>
+                            <td>{row['序号']}</td>
+                            <td>{row['行业']}</td>
+                            <td>{row['公司家数']}</td>
+                            <td>{row['流入资金']:.2f}</td>
+                            <td>{row['流出资金']:.2f}</td>
+                            <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
+                            <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                        </tr>
+            """
+    else:
+        html += """
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                        </tr>
+        """
+    html += """
+                    </table>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📊 概念资金流排行 <span style="font-size: 0.8em; color: #666;">10日排行</span></h2>
+                <div class="table-container" style="width: 100%;">
+                    <table>
+                        <tr>
+                            <th>排名</th>
+                            <th>概念板块</th>
+                            <th>公司家数</th>
+                            <th>流入资金(亿)</th>
+                            <th>流出资金(亿)</th>
+                            <th>净额(亿)</th>
+                            <th>阶段涨跌幅</th>
+                        </tr>
+                        """
+    if capital_flow_data and "10日" in capital_flow_data and not capital_flow_data["10日"].empty:
+        for _, row in capital_flow_data["10日"].head(20).iterrows():
+            html += f"""
+                        <tr>
+                            <td>{row['序号']}</td>
+                            <td>{row['行业']}</td>
+                            <td>{row['公司家数']}</td>
+                            <td>{row['流入资金']:.2f}</td>
+                            <td>{row['流出资金']:.2f}</td>
+                            <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
+                            <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                        </tr>
+            """
+    else:
+        html += """
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                        </tr>
+        """
+    html += """
+                    </table>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📊 概念资金流排行 <span style="font-size: 0.8em; color: #666;">20日排行</span></h2>
+                <div class="table-container" style="width: 100%;">
+                    <table>
+                        <tr>
+                            <th>排名</th>
+                            <th>概念板块</th>
+                            <th>公司家数</th>
+                            <th>流入资金(亿)</th>
+                            <th>流出资金(亿)</th>
+                            <th>净额(亿)</th>
+                            <th>阶段涨跌幅</th>
+                        </tr>
+                        """
+    if capital_flow_data and "20日" in capital_flow_data and not capital_flow_data["20日"].empty:
+        for _, row in capital_flow_data["20日"].head(20).iterrows():
+            html += f"""
+                        <tr>
+                            <td>{row['序号']}</td>
+                            <td>{row['行业']}</td>
+                            <td>{row['公司家数']}</td>
+                            <td>{row['流入资金']:.2f}</td>
+                            <td>{row['流出资金']:.2f}</td>
+                            <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
+                            <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                        </tr>
+            """
+    else:
+        html += """
+                        <tr>
+                            <td colspan="7" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                        </tr>
+        """
     html += """
                     </table>
                 </div>
@@ -1206,6 +1410,10 @@ if __name__ == "__main__":
     print("\n正在获取行业板块信息...")
     industry_info = get_board_industry_info()
     
+    # 获取资金流向数据
+    print("\n正在获取资金流向数据...")
+    capital_flow_data = get_capital_flow_data()
+    
     # 显示今天涨停股池数据
     if not today_pool.empty:
         print("\n" + "=" * 60)
@@ -1229,7 +1437,7 @@ if __name__ == "__main__":
     print("正在生成HTML报告...")
     print("=" * 60)
     
-    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info)
+    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data)
     
     # 保存HTML文件
     html_file_path = "limit_up_pool_report.html"

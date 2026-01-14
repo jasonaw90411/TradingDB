@@ -7,6 +7,7 @@ import akshare as ak
 # 全局变量定义
 MIN_LIMIT_UP_DAYS = 3
 _market_data_cache = None
+ALI_QIAN_WEN = "sk-0cf24d6cc45a4d88bf150f8b565c1ef7"
 
 
 def get_cls_news():
@@ -17,6 +18,17 @@ def get_cls_news():
         return df
     except Exception as e:
         print(f"获取财联社电报失败: {e}")
+        return pd.DataFrame()
+
+
+def get_ths_news():
+    """获取同花顺财经直播数据"""
+    try:
+        df = ak.stock_info_global_ths()
+        print(f"成功获取同花顺财经直播数据，共 {len(df)} 条")
+        return df
+    except Exception as e:
+        print(f"获取同花顺财经直播失败: {e}")
         return pd.DataFrame()
 
 
@@ -146,7 +158,7 @@ def get_yyb_lhb_data(yyb_code="210204000015668"):
 
 
 
-def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data=None, industry_flow_data=None, yyb_lhb_data=None, cls_news=None):
+def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data=None, industry_flow_data=None, yyb_lhb_data=None, cls_news=None, ths_news=None):
     # 获取股票市场活跃度数据
     try:
         market_activity = ak.stock_market_activity_legu()
@@ -158,18 +170,33 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
     # 如果没有提供新闻数据，则获取
     if cls_news is None:
         cls_news = get_cls_news()
+    if ths_news is None:
+        ths_news = get_ths_news()
     
     # 生成新闻HTML
     news_html = ""
+    news_items = []
+    icons = ['📰', '📊', '💹', '📈', '💼', '🏢', '💡', '⚡', '🔔', '📢']
+    
+    # 添加财联社新闻
     if not cls_news.empty:
-        news_items = []
-        icons = ['📰', '📊', '💹', '📈', '💡', '🔔', '📢']
         for idx, row in cls_news.iterrows():
             title = str(row.get('标题', ''))
             time_str = str(row.get('发布时间', ''))
             icon = icons[idx % len(icons)]
-            news_items.append(f"<span class='news-item'>{icon} [{time_str}] {title}</span>")
-        
+            news_items.append(f"<span class='news-item'>{icon} [财联社 {time_str}] {title}</span>")
+    
+    # 添加同花顺新闻
+    if not ths_news.empty:
+        start_idx = len(news_items)
+        for idx, row in ths_news.iterrows():
+            title = str(row.get('标题', ''))
+            time_str = str(row.get('发布时间', ''))
+            icon = icons[(start_idx + idx) % len(icons)]
+            news_items.append(f"<span class='news-item'>{icon} [同花顺 {time_str}] {title}</span>")
+    
+    # 如果有新闻，则使用新闻数据
+    if news_items:
         # 重复新闻以实现无缝滚动
         news_html = '\n                    '.join(news_items + news_items)
     else:
@@ -257,7 +284,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             }}
             .news-scroll {{
                 display: flex;
-                animation: scroll 80s linear infinite;
+                animation: scroll 280s linear infinite;
                 white-space: nowrap;
             }}
             .news-scroll:hover {{
@@ -786,7 +813,6 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                             <th>最新价</th>
                             <th>成交额(亿)</th>
                             <th>流通市值(亿)</th>
-                            <th>总市值(亿)</th>
                             <th>换手率(%)</th>
                             <th>封板资金(亿)</th>
                             <th>首次封板时间</th>
@@ -810,7 +836,6 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                             <td>{row['最新价']:.2f}</td>
                             <td>{row['成交额']/100000000:.2f}</td>
                             <td>{row['流通市值']/100000000:.2f}</td>
-                            <td>{row['总市值']/100000000:.2f}</td>
                             <td>{row['换手率']:.2f}</td>
                             <td>{row['封板资金']/100000000:.2f}</td>
                             <td>{format_time(row['首次封板时间'])}</td>
@@ -1434,6 +1459,10 @@ if __name__ == "__main__":
     print("\n正在获取财联社新闻数据...")
     cls_news = get_cls_news()
     
+    # 获取同花顺新闻数据
+    print("\n正在获取同花顺新闻数据...")
+    ths_news = get_ths_news()
+    
     # 显示今天涨停股池数据
     if not today_pool.empty:
         print("\n" + "=" * 60)
@@ -1457,7 +1486,7 @@ if __name__ == "__main__":
     print("正在生成HTML报告...")
     print("=" * 60)
     
-    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data, industry_flow_data, yyb_lhb_data, cls_news)
+    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data, industry_flow_data, yyb_lhb_data, cls_news, ths_news)
     
     # 保存HTML文件
     html_file_path = "limit_up_pool_report.html"

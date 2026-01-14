@@ -252,14 +252,14 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
             }}
             .activity-grid {{
                 display: grid;
-                grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-                gap: 20px;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 15px;
                 margin-top: 20px;
             }}
             .activity-card {{
                 background: white;
                 border-radius: 12px;
-                padding: 20px;
+                padding: 15px;
                 box-shadow: 0 4px 12px rgba(0,0,0,0.08);
                 text-align: center;
                 transition: all 0.3s ease;
@@ -279,17 +279,17 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
                 border-left-color: #95a5a6;
             }}
             .activity-icon {{
-                font-size: 3rem;
-                margin-bottom: 10px;
+                font-size: 2rem;
+                margin-bottom: 8px;
             }}
             .activity-title {{
-                font-size: 1.1rem;
+                font-size: 0.9rem;
                 color: #666;
-                margin-bottom: 10px;
+                margin-bottom: 8px;
                 font-weight: 600;
             }}
             .activity-value {{
-                 font-size: 2.5rem;
+                 font-size: 1.8rem;
                  font-weight: 700;
                  color: #2c3e50;
              }}
@@ -340,6 +340,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
             }}
         </style>
         <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
         <script>
             function showPage(pageId) {{
                 var limitUpPage = document.getElementById('limit-up-page');
@@ -367,15 +368,16 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
             }}
             
             function initCharts() {{
-                // 上涨下跌饼图
-                const upDownCtx = document.getElementById('upDownChart').getContext('2d');
-                new Chart(upDownCtx, {{
-                    type: 'doughnut',
+            // 上涨下跌饼图
+            const upDownCtx = document.getElementById('upDownChart').getContext('2d');
+            new Chart(upDownCtx, {{
+                type: 'doughnut',
+                plugins: [ChartDataLabels],
                     data: {{
                         labels: ['上涨', '下跌', '平盘'],
                         datasets: [{{
                             data: [{market_activity.loc[market_activity['item'] == '上涨', 'value'].iloc[0] if not market_activity.empty and '上涨' in market_activity['item'].values else 0}, {market_activity.loc[market_activity['item'] == '下跌', 'value'].iloc[0] if not market_activity.empty and '下跌' in market_activity['item'].values else 0}, {market_activity.loc[market_activity['item'] == '平盘', 'value'].iloc[0] if not market_activity.empty and '平盘' in market_activity['item'].values else 0}],
-                            backgroundColor: ['#27ae60', '#e74c3c', '#95a5a6'],
+                            backgroundColor: ['#f5cac3', '#84a98c', '#cad2c5'],
                             borderWidth: 0
                         }}]
                     }},
@@ -387,16 +389,34 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
                                 position: 'bottom',
                                 labels: {{
                                     font: {{
-                                        size: 14
+                                        size: 12
                                     }}
                                 }}
                             }},
                             title: {{
                                 display: true,
-                                text: '上涨下跌分布',
+                                text: '市场赚钱效应',
                                 font: {{
-                                    size: 16,
+                                    size: 12,
                                     weight: 'bold'
+                                }}
+                            }},
+                            tooltip: {{
+                                callbacks: {{
+                                    label: function(context) {{
+                                        return context.label + ': ' + context.raw;
+                                    }}
+                                }}
+                            }},
+                            datalabels: {{
+                                display: true,
+                                color: '#ffffff',
+                                font: {{
+                                    size: 12,
+                                    weight: 'bold'
+                                }},
+                                formatter: function(value, context) {{
+                                    return value;
                                 }}
                             }}
                         }}
@@ -404,14 +424,15 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
                 }});
                 
                 // 涨停跌停饼图
-                const limitCtx = document.getElementById('limitChart').getContext('2d');
-                new Chart(limitCtx, {{
-                    type: 'doughnut',
+            const limitCtx = document.getElementById('limitChart').getContext('2d');
+            new Chart(limitCtx, {{
+                type: 'doughnut',
+                plugins: [ChartDataLabels],
                     data: {{
-                        labels: ['涨停', '真实涨停', '跌停', '真实跌停'],
+                        labels: ['真实涨停', '一字涨停', '真实跌停', '一字跌停'],
                         datasets: [{{
-                            data: [{market_activity.loc[market_activity['item'] == '涨停', 'value'].iloc[0] if not market_activity.empty and '涨停' in market_activity['item'].values else 0}, {market_activity.loc[market_activity['item'] == '真实涨停', 'value'].iloc[0] if not market_activity.empty and '真实涨停' in market_activity['item'].values else 0}, {market_activity.loc[market_activity['item'] == '跌停', 'value'].iloc[0] if not market_activity.empty and '跌停' in market_activity['item'].values else 0}, {market_activity.loc[market_activity['item'] == '真实跌停', 'value'].iloc[0] if not market_activity.empty and '真实跌停' in market_activity['item'].values else 0}],
-                            backgroundColor: ['#e74c3c', '#c0392b', '#3498db', '#2980b9'],
+                            data: [{market_activity.loc[market_activity['item'] == '真实涨停', 'value'].iloc[0] if not market_activity.empty and '真实涨停' in market_activity['item'].values else 0}, {market_activity.loc[market_activity['item'] == '涨停', 'value'].iloc[0] - (market_activity.loc[market_activity['item'] == '真实涨停', 'value'].iloc[0] if not market_activity.empty and '真实涨停' in market_activity['item'].values else 0) if not market_activity.empty and '涨停' in market_activity['item'].values else 0}, {market_activity.loc[market_activity['item'] == '真实跌停', 'value'].iloc[0] if not market_activity.empty and '真实跌停' in market_activity['item'].values else 0}, {market_activity.loc[market_activity['item'] == '跌停', 'value'].iloc[0] - (market_activity.loc[market_activity['item'] == '真实跌停', 'value'].iloc[0] if not market_activity.empty and '真实跌停' in market_activity['item'].values else 0) if not market_activity.empty and '跌停' in market_activity['item'].values else 0}],
+                            backgroundColor: ['#f28482', '#e5989b', '#84a98c', '#52796f'],
                             borderWidth: 0
                         }}]
                     }},
@@ -423,16 +444,34 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
                                 position: 'bottom',
                                 labels: {{
                                     font: {{
-                                        size: 14
+                                        size: 12
                                     }}
                                 }}
                             }},
                             title: {{
                                 display: true,
-                                text: '涨停跌停分布',
+                                text: '涨停跌停分布（总数=真实+一字）',
                                 font: {{
-                                    size: 16,
+                                    size: 14,
                                     weight: 'bold'
+                                }}
+                            }},
+                            tooltip: {{
+                                callbacks: {{
+                                    label: function(context) {{
+                                        return context.label + ': ' + context.raw;
+                                    }}
+                                }}
+                            }},
+                            datalabels: {{
+                                display: true,
+                                color: '#ffffff',
+                                font: {{
+                                    size: 12,
+                                    weight: 'bold'
+                                }},
+                                formatter: function(value, context) {{
+                                    return value;
                                 }}
                             }}
                         }}

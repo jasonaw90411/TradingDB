@@ -9,6 +9,17 @@ MIN_LIMIT_UP_DAYS = 3
 _market_data_cache = None
 
 
+def get_cls_news():
+    """获取财联社电报数据"""
+    try:
+        df = ak.stock_info_global_cls(symbol="全部")
+        print(f"成功获取财联社电报数据，共 {len(df)} 条")
+        return df
+    except Exception as e:
+        print(f"获取财联社电报失败: {e}")
+        return pd.DataFrame()
+
+
 def get_today_limit_up_pool():
     """获取今天涨停股池数据"""
     try:
@@ -135,7 +146,7 @@ def get_yyb_lhb_data(yyb_code="210204000015668"):
 
 
 
-def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data=None, industry_flow_data=None, yyb_lhb_data=None):
+def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data=None, industry_flow_data=None, yyb_lhb_data=None, cls_news=None):
     # 获取股票市场活跃度数据
     try:
         market_activity = ak.stock_market_activity_legu()
@@ -143,6 +154,35 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
     except Exception as e:
         print(f"获取股票市场活跃度数据失败: {e}")
         market_activity = pd.DataFrame()
+    
+    # 如果没有提供新闻数据，则获取
+    if cls_news is None:
+        cls_news = get_cls_news()
+    
+    # 生成新闻HTML
+    news_html = ""
+    if not cls_news.empty:
+        news_items = []
+        icons = ['📰', '📊', '💹', '📈', '💡', '🔔', '📢']
+        for idx, row in cls_news.iterrows():
+            title = str(row.get('标题', ''))
+            time_str = str(row.get('发布时间', ''))
+            icon = icons[idx % len(icons)]
+            news_items.append(f"<span class='news-item'>{icon} [{time_str}] {title}</span>")
+        
+        # 重复新闻以实现无缝滚动
+        news_html = '\n                    '.join(news_items + news_items)
+    else:
+        # 默认新闻
+        default_news = [
+            "📈 沪指今日收涨0.5%，创业板指涨1.2%",
+            "💰 北向资金净流入50亿元，连续3日净买入",
+            "🚀 新能源板块强势领涨，多股涨停",
+            "📊 央行今日开展1000亿元逆回购操作",
+            "🔥 科技股持续活跃，人工智能概念受关注"
+        ]
+        news_html = '\n                    '.join([f"<span class='news-item'>{news}</span>" for news in default_news * 2])
+    
     """生成涨停股池HTML报告"""
     today_str = datetime.now().strftime('%Y-%m-%d')
     yesterday_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
@@ -217,7 +257,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             }}
             .news-scroll {{
                 display: flex;
-                animation: scroll 30s linear infinite;
+                animation: scroll 80s linear infinite;
                 white-space: nowrap;
             }}
             .news-scroll:hover {{
@@ -584,6 +624,14 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             
             window.onload = function() {{
                 updateRefreshTime();
+                startAutoRefresh();
+            }}
+            
+            function startAutoRefresh() {{
+                setInterval(function() {{
+                    console.log('15分钟自动刷新页面以更新新闻...');
+                    location.reload();
+                }}, 15 * 60 * 1000);
             }}
 
             function initCharts() {{
@@ -704,16 +752,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             <div class="news-label">📰 财经快讯</div>
             <div class="news-content">
                 <div class="news-scroll" id="newsScroll">
-                    <span class="news-item">📈 沪指今日收涨0.5%，创业板指涨1.2%</span>
-                    <span class="news-item">💰 北向资金净流入50亿元，连续3日净买入</span>
-                    <span class="news-item">🚀 新能源板块强势领涨，多股涨停</span>
-                    <span class="news-item">📊 央行今日开展1000亿元逆回购操作</span>
-                    <span class="news-item">🔥 科技股持续活跃，人工智能概念受关注</span>
-                    <span class="news-item">📈 沪指今日收涨0.5%，创业板指涨1.2%</span>
-                    <span class="news-item">💰 北向资金净流入50亿元，连续3日净买入</span>
-                    <span class="news-item">🚀 新能源板块强势领涨，多股涨停</span>
-                    <span class="news-item">📊 央行今日开展1000亿元逆回购操作</span>
-                    <span class="news-item">🔥 科技股持续活跃，人工智能概念受关注</span>
+                    """ + news_html + """
                 </div>
             </div>
         </div>
@@ -1391,6 +1430,10 @@ if __name__ == "__main__":
     print("\n正在获取营业部龙虎榜数据...")
     yyb_lhb_data = get_yyb_lhb_data(yyb_code="10030463")
     
+    # 获取财联社新闻数据
+    print("\n正在获取财联社新闻数据...")
+    cls_news = get_cls_news()
+    
     # 显示今天涨停股池数据
     if not today_pool.empty:
         print("\n" + "=" * 60)
@@ -1414,7 +1457,7 @@ if __name__ == "__main__":
     print("正在生成HTML报告...")
     print("=" * 60)
     
-    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data, industry_flow_data, yyb_lhb_data)
+    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data, industry_flow_data, yyb_lhb_data, cls_news)
     
     # 保存HTML文件
     html_file_path = "limit_up_pool_report.html"

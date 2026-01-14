@@ -495,7 +495,28 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 if (activeNavItem) {{
                     const pageId = activeNavItem.onclick.toString().match(/'([^']+)'/)[1];
                     showPage(pageId);
+                    updateRefreshTime();
                 }}
+            }}
+            
+            function updateRefreshTime() {{
+                const now = new Date();
+                const timeStr = now.toLocaleString('zh-CN', {{
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                }});
+                const refreshTimeElements = document.querySelectorAll('.refresh-time');
+                refreshTimeElements.forEach(element => {{
+                    element.textContent = '最后刷新: ' + timeStr;
+                }});
+            }}
+            
+            window.onload = function() {{
+                updateRefreshTime();
             }}
 
             function initCharts() {{
@@ -625,6 +646,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             <div class="header">
                 <h1>🚀 涨停股池数据</h1>
                 <p class="subtitle">实时更新的涨停板行情数据</p>
+                <p class="refresh-time" style="color: rgba(255,255,255,0.7); font-size: 0.9em; margin-top: 5px;"></p>
             </div>
             <button class="refresh-btn" onclick="refreshCurrentPage()">🔄 刷新数据</button>
             <div class="container">
@@ -1431,8 +1453,29 @@ def generate_html_report(yesterday_limit_up, before_yesterday_limit_up, breakout
         <div class="header">
             <h1>A股涨停股票数据</h1>
             <p class="subtitle">实时更新的涨停板数据统计 <span style="font-size: 0.9em; color: #667eea; font-weight: 600;">(一进二打板策略选中 {breakout_count} 只)</span></p>
+            <p class="refresh-time" style="color: #666; font-size: 0.9em; margin-top: 5px;"></p>
         </div>
-        <button class="refresh-btn" onclick="location.reload()">🔄 刷新数据</button>
+        <button class="refresh-btn" onclick="location.reload(); updateRefreshTime();">🔄 刷新数据</button>
+        <script>
+            function updateRefreshTime() {{
+                const now = new Date();
+                const timeStr = now.toLocaleString('zh-CN', {{
+                    year: 'numeric',
+                    month: '2-digit',
+                    day: '2-digit',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                }});
+                const refreshTimeElements = document.querySelectorAll('.refresh-time');
+                refreshTimeElements.forEach(element => {{
+                    element.textContent = '最后刷新: ' + timeStr;
+                }});
+            }}
+            window.onload = function() {{
+                updateRefreshTime();
+            }};
+        </script>
         <div class="container">
             <div class="section">
                 <h2>📈 最近一个交易日涨停股票 - {yesterday_str} <span style="font-size: 0.8em; color: #666;">(共 {yesterday_count} 只)</span></h2>

@@ -68,6 +68,58 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool):
                 font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
                 background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
                 min-height: 100vh;
+                padding: 0;
+                display: flex;
+            }}
+            .sidebar {{
+                width: 250px;
+                background: rgba(0, 0, 0, 0.3);
+                backdrop-filter: blur(10px);
+                padding: 30px 20px;
+                display: flex;
+                flex-direction: column;
+                position: fixed;
+                height: 100vh;
+                overflow-y: auto;
+                border-right: 1px solid rgba(255, 255, 255, 0.1);
+            }}
+            .sidebar-title {{
+                color: white;
+                font-size: 1.8rem;
+                font-weight: 700;
+                margin-bottom: 30px;
+                text-align: center;
+                padding-bottom: 20px;
+                border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+            }}
+            .nav-menu {{
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }}
+            .nav-item {{
+                padding: 15px 20px;
+                color: rgba(255, 255, 255, 0.8);
+                text-decoration: none;
+                border-radius: 8px;
+                transition: all 0.3s ease;
+                font-size: 1rem;
+                font-weight: 500;
+                cursor: pointer;
+            }}
+            .nav-item:hover {{
+                background: rgba(255, 255, 255, 0.15);
+                color: white;
+                transform: translateX(5px);
+            }}
+            .nav-item.active {{
+                background: rgba(255, 255, 255, 0.2);
+                color: white;
+                font-weight: 600;
+            }}
+            .main-content {{
+                flex: 1;
+                margin-left: 250px;
                 padding: 20px;
             }}
             .header {{
@@ -197,12 +249,19 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool):
         </style>
     </head>
     <body>
-        <div class="header">
-            <h1>🚀 涨停股池数据</h1>
-            <p class="subtitle">实时更新的涨停板行情数据</p>
+        <div class="sidebar">
+            <div class="sidebar-title">📊 复盘助手</div>
+            <div class="nav-menu">
+                <div class="nav-item active">📈 涨停股池数据</div>
+            </div>
         </div>
-        <button class="refresh-btn" onclick="location.reload()">🔄 刷新数据</button>
-        <div class="container">
+        <div class="main-content">
+            <div class="header">
+                <h1>🚀 涨停股池数据</h1>
+                <p class="subtitle">实时更新的涨停板行情数据</p>
+            </div>
+            <button class="refresh-btn" onclick="location.reload()">🔄 刷新数据</button>
+            <div class="container">
             <div class="section">
                 <h2>📈 今天涨停股池 - {today_str} <span style="font-size: 0.8em; color: #666;">(共 {len(today_pool)} 只)</span></h2>
                 <div class="table-container">
@@ -319,6 +378,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool):
                     </table>
                 </div>
             </div>
+        </div>
         </div>
     </body>
 </html>

@@ -123,9 +123,19 @@ def get_industry_flow_data():
         print(f"获取行业资金流向数据失败: {e}")
         return {}
 
+def get_yyb_lhb_data(yyb_code="210204000015668"):
+    """获取营业部龙虎榜数据"""
+    try:
+        lhb_df = ak.stock_lhb_yyb_detail_em(symbol=yyb_code)
+        print(f"成功获取营业部龙虎榜数据，共 {len(lhb_df)} 条记录")
+        return lhb_df
+    except Exception as e:
+        print(f"获取营业部龙虎榜数据失败: {e}")
+        return pd.DataFrame()
 
 
-def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data=None, industry_flow_data=None):
+
+def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data=None, industry_flow_data=None, yyb_lhb_data=None):
     # 获取股票市场活跃度数据
     try:
         market_activity = ak.stock_market_activity_legu()
@@ -427,6 +437,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 var limitUpPage = document.getElementById('limit-up-page');
                 var boardInfoPage = document.getElementById('board-info-page');
                 var capitalFlowPage = document.getElementById('capital-flow-page');
+                var chenXiaoqunPage = document.getElementById('chen-xiaoqun-page');
                 var navItems = document.querySelectorAll('.nav-item');
                 var headerTitle = document.querySelector('h1');
                 var headerSubtitle = document.querySelector('.subtitle');
@@ -435,18 +446,22 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     limitUpPage.style.display = 'block';
                     boardInfoPage.style.display = 'none';
                     capitalFlowPage.style.display = 'none';
+                    chenXiaoqunPage.style.display = 'none';
                     navItems[0].classList.remove('active');
                     navItems[1].classList.remove('active');
                     navItems[2].classList.add('active');
+                    navItems[3].classList.remove('active');
                     headerTitle.textContent = '🚀 涨停股池数据';
                     headerSubtitle.textContent = '实时更新的涨停板行情数据';
                 }} else if (pageId === 'board-info') {{
                     limitUpPage.style.display = 'none';
                     boardInfoPage.style.display = 'block';
                     capitalFlowPage.style.display = 'none';
+                    chenXiaoqunPage.style.display = 'none';
                     navItems[0].classList.remove('active');
                     navItems[1].classList.add('active');
                     navItems[2].classList.remove('active');
+                    navItems[3].classList.remove('active');
                     headerTitle.textContent = '📊 概念板块信息';
                     headerSubtitle.textContent = '实时更新的概念板块行情数据';
                     initCharts();
@@ -454,11 +469,24 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     limitUpPage.style.display = 'none';
                     boardInfoPage.style.display = 'none';
                     capitalFlowPage.style.display = 'block';
+                    chenXiaoqunPage.style.display = 'none';
                     navItems[0].classList.add('active');
                     navItems[1].classList.remove('active');
                     navItems[2].classList.remove('active');
+                    navItems[3].classList.remove('active');
                     headerTitle.textContent = '💰 资金流向数据';
                     headerSubtitle.textContent = '实时更新的资金流向统计数据';
+                }} else if (pageId === 'chen-xiaoqun') {{
+                    limitUpPage.style.display = 'none';
+                    boardInfoPage.style.display = 'none';
+                    capitalFlowPage.style.display = 'none';
+                    chenXiaoqunPage.style.display = 'block';
+                    navItems[0].classList.remove('active');
+                    navItems[1].classList.remove('active');
+                    navItems[2].classList.remove('active');
+                    navItems[3].classList.add('active');
+                    headerTitle.textContent = '👤 陈小群追踪';
+                    headerSubtitle.textContent = '知名游资陈小群龙虎榜追踪';
                 }}
             }}
             
@@ -590,6 +618,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 <div class="nav-item" onclick="showPage('capital-flow')">💰 资金流向</div>
                 <div class="nav-item" onclick="showPage('board-info')">📊 板块信息</div>
                 <div class="nav-item active" onclick="showPage('limit-up')">📈 涨停股池数据</div>
+                <div class="nav-item" onclick="showPage('chen-xiaoqun')">👤 陈小群追踪</div>
             </div>
         </div>
         <div class="main-content">
@@ -1168,6 +1197,51 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 </div>
             </div>
             </div>
+            <div id="chen-xiaoqun-page" class="page-content" style="display: none;">
+            <div class="section">
+                <h2>👤 陈小群龙虎榜追踪</h2>
+                <div class="table-container">
+                    <table>
+                        <tr>
+                            <th>序号</th>
+                            <th>股票代码</th>
+                            <th>股票名称</th>
+                            <th>交易日期</th>
+                            <th>涨跌幅(%)</th>
+                            <th>买入金额(万)</th>
+                            <th>卖出金额(万)</th>
+                            <th>净额(万)</th>
+                            <th>上榜原因</th>
+                        </tr>
+                        """
+    if not yyb_lhb_data.empty:
+        for _, row in yyb_lhb_data.iterrows():
+            change_class = 'positive' if row['涨跌幅'] > 0 else 'negative'
+            net_class = 'positive' if row['净额'] > 0 else 'negative'
+            html += f"""
+                        <tr>
+                            <td>{int(row['序号'])}</td>
+                            <td>{row['股票代码']}</td>
+                            <td>{row['股票名称']}</td>
+                            <td>{row['交易日期']}</td>
+                            <td class="{change_class}">{row['涨跌幅']:.2f}</td>
+                            <td>{row['买入金额']/10000:.2f}</td>
+                            <td>{row['卖出金额']/10000:.2f}</td>
+                            <td class="{net_class}">{row['净额']/10000:.2f}</td>
+                            <td>{row['上榜原因']}</td>
+                        </tr>
+            """
+    else:
+        html += """
+                        <tr>
+                            <td colspan="9" style="text-align: center; padding: 40px; color: #999;">暂无数据</td>
+                        </tr>
+        """
+    html += """
+                    </table>
+                </div>
+            </div>
+            </div>
         </div>
         </div>
     </body>
@@ -1577,6 +1651,10 @@ if __name__ == "__main__":
     print("\n正在获取行业资金流向数据...")
     industry_flow_data = get_industry_flow_data()
     
+    # 获取营业部龙虎榜数据
+    print("\n正在获取营业部龙虎榜数据...")
+    yyb_lhb_data = get_yyb_lhb_data(yyb_code="10030463")
+    
     # 显示今天涨停股池数据
     if not today_pool.empty:
         print("\n" + "=" * 60)
@@ -1600,7 +1678,7 @@ if __name__ == "__main__":
     print("正在生成HTML报告...")
     print("=" * 60)
     
-    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data, industry_flow_data)
+    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data, industry_flow_data, yyb_lhb_data)
     
     # 保存HTML文件
     html_file_path = "limit_up_pool_report.html"

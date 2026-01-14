@@ -33,7 +33,18 @@ def get_yesterday_limit_up_pool():
         return pd.DataFrame()
 
 
-def generate_limit_up_pool_html(today_pool, yesterday_pool):
+def get_board_concept_info():
+    """获取概念板块信息数据"""
+    try:
+        df = ak.stock_board_concept_name_em()
+        print(f"成功获取概念板块信息数据，共 {len(df)} 个板块")
+        return df
+    except Exception as e:
+        print(f"获取概念板块信息失败: {e}")
+        return pd.DataFrame()
+
+
+def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info):
     """生成涨停股池HTML报告"""
     today_str = datetime.now().strftime('%Y-%m-%d')
     yesterday_str = (datetime.now() - timedelta(days=1)).strftime('%Y-%m-%d')
@@ -247,12 +258,38 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool):
                 transition: background 0.2s ease;
             }}
         </style>
+        <script>
+            function showPage(pageId) {{
+                var limitUpPage = document.getElementById('limit-up-page');
+                var boardInfoPage = document.getElementById('board-info-page');
+                var navItems = document.querySelectorAll('.nav-item');
+                var headerTitle = document.querySelector('h1');
+                var headerSubtitle = document.querySelector('.subtitle');
+                
+                if (pageId === 'limit-up') {{
+                    limitUpPage.style.display = 'block';
+                    boardInfoPage.style.display = 'none';
+                    navItems[0].classList.remove('active');
+                    navItems[1].classList.add('active');
+                    headerTitle.textContent = '🚀 涨停股池数据';
+                    headerSubtitle.textContent = '实时更新的涨停板行情数据';
+                }} else if (pageId === 'board-info') {{
+                    limitUpPage.style.display = 'none';
+                    boardInfoPage.style.display = 'block';
+                    navItems[0].classList.add('active');
+                    navItems[1].classList.remove('active');
+                    headerTitle.textContent = '📊 概念板块信息';
+                    headerSubtitle.textContent = '实时更新的概念板块行情数据';
+                }}
+            }}
+        </script>
     </head>
     <body>
         <div class="sidebar">
             <div class="sidebar-title">📊 复盘助手</div>
             <div class="nav-menu">
-                <div class="nav-item active">📈 涨停股池数据</div>
+                <div class="nav-item" onclick="showPage('board-info')">📊 板块信息</div>
+                <div class="nav-item active" onclick="showPage('limit-up')">📈 涨停股池数据</div>
             </div>
         </div>
         <div class="main-content">
@@ -262,8 +299,9 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool):
             </div>
             <button class="refresh-btn" onclick="location.reload()">🔄 刷新数据</button>
             <div class="container">
+            <div id="limit-up-page" class="page-content">
             <div class="section">
-                <h2>📈 今天涨停股池 - {today_str} <span style="font-size: 0.8em; color: #666;">(共 {len(today_pool)} 只)</span></h2>
+                <h2>📈 今日涨停股池 - """ + today_str + """ <span style="font-size: 0.8em; color: #666;">(共 """ + str(len(today_pool)) + """ 只)</span></h2>
                 <div class="table-container">
                     <table>
                         <tr>
@@ -377,6 +415,59 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool):
     html += """
                     </table>
                 </div>
+            </div>
+            </div>
+            <div id="board-info-page" class="page-content" style="display: none;">
+            <div class="section">
+                <h2>📊 概念板块信息 <span style="font-size: 0.8em; color: #666;">(共 """ + str(len(board_info)) + """ 个板块)</span></h2>
+                <div class="table-container">
+                    <table>
+                        <tr>
+                            <th>排名</th>
+                            <th>板块名称</th>
+                            <th>板块代码</th>
+                            <th>最新价</th>
+                            <th>涨跌额</th>
+                            <th>涨跌幅(%)</th>
+                            <th>总市值(亿)</th>
+                            <th>换手率(%)</th>
+                            <th>上涨家数</th>
+                            <th>下跌家数</th>
+                            <th>领涨股票</th>
+                            <th>领涨股票-涨跌幅(%)</th>
+                        </tr>
+    """
+    
+    if not board_info.empty:
+        for _, row in board_info.iterrows():
+            change_class = 'positive' if row['涨跌幅'] > 0 else 'negative'
+            html += f"""
+                        <tr>
+                            <td>{int(row['排名'])}</td>
+                            <td>{row['板块名称']}</td>
+                            <td>{row['板块代码']}</td>
+                            <td>{row['最新价']:.2f}</td>
+                            <td>{row['涨跌额']:.2f}</td>
+                            <td class="{change_class}">{row['涨跌幅']:.2f}</td>
+                            <td>{row['总市值']/100000000:.2f}</td>
+                            <td>{row['换手率']:.2f}</td>
+                            <td>{int(row['上涨家数'])}</td>
+                            <td>{int(row['下跌家数'])}</td>
+                            <td>{row['领涨股票']}</td>
+                            <td class="{change_class}">{row['领涨股票-涨跌幅']:.2f}</td>
+                        </tr>
+            """
+    else:
+        html += """
+                        <tr>
+                            <td colspan="12" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                        </tr>
+        """
+    
+    html += """
+                    </table>
+                </div>
+            </div>
             </div>
         </div>
         </div>
@@ -771,6 +862,10 @@ if __name__ == "__main__":
     print("\n正在获取昨日涨停股池...")
     yesterday_pool = get_yesterday_limit_up_pool()
     
+    # 获取概念板块信息
+    print("\n正在获取概念板块信息...")
+    board_info = get_board_concept_info()
+    
     # 显示今天涨停股池数据
     if not today_pool.empty:
         print("\n" + "=" * 60)
@@ -794,7 +889,7 @@ if __name__ == "__main__":
     print("正在生成HTML报告...")
     print("=" * 60)
     
-    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool)
+    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info)
     
     # 保存HTML文件
     html_file_path = "limit_up_pool_report.html"

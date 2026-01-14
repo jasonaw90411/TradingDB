@@ -2,15 +2,10 @@
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
-import requests
-import json
 import akshare as ak
 
 # 全局变量定义
-MIN_LIMIT_UP_DAYS = 3  # 最小涨停天数，可根据需要调整
-QIAN_WEN_API= "sk-0cf24d6cc45a4d88bf150f8b565c1ef7"
-INDEX_CODE = "000001.XSHG"  # 默认使用上证指数
-DEVIATION_PERIODS = [3, 10]  # 计算偏离值的时间段
+MIN_LIMIT_UP_DAYS = 3
 
 # Akshare 原生函数
 def get_all_securities(types=None, date=None):
@@ -340,135 +335,14 @@ def get_all_stocks(include_cy=False):
         return []
 
 
-def calculate_price_deviation(stock_list, days=DEVIATION_PERIODS, index_code=INDEX_CODE):
-    """
-    计算指定股票列表的3天和10日涨幅偏离值及下一个交易日的涨幅空间
-    
-    参数:
-    - stock_list: 股票代码列表
-    - days: 计算天数列表，默认使用全局变量DEVIATION_PERIODS
-    - index_code: 大盘指数代码，默认使用全局变量INDEX_CODE
-    
-    返回:
-    - DataFrame: 包含偏离值和涨幅空间的股票列表
-    """
-    
-    print(f"计算{days}日涨幅偏离值及涨幅空间...")
-    
-    # 获取最近的交易日期
-    latest_date = get_latest_trading_date()
-    
-    # 计算需要的最早日期
-    max_days = max(days)
-    start_date = latest_date - timedelta(days=max_days * 2)  # 留足缓冲区，考虑周末和节假日
-    
-    # 获取所有股票代码信息
-    stocks = get_all_securities(types=['stock'], date=None)
-    
-    # 结果列表
-    result_list = []
-    
-    # 遍历每个股票
-    for stock_code in stock_list:
-        try:
-            # 获取股票数据
-            df = get_price(stock_code, 
-                          start_date=start_date, 
-                          end_date=latest_date, 
-                          frequency='daily', 
-                          fields=['close', 'pre_close'])
-            
-            if df.empty:
-                continue
-                
-            # 获取股票基本信息
-            stock_info = stocks.loc[stock_code]
-            
-            # 根据股票代码判断市场并获取对应指数
-            if stock_code.endswith('.XSHG'):
-                # 上证股票
-                index_code = '000001.XSHG'  # 上证指数
-            elif stock_code.startswith('300') or stock_code.startswith('301'):
-                # 创业板股票
-                index_code = '399006.XSHE'  # 创业板指
-            else:
-                # 深证股票
-                index_code = '399001.XSHE'  # 深证成指
-            
-            # 获取对应的大盘指数数据
-            index_df = get_index_data(start_date, latest_date, index_code)
-            
-            if index_df.empty:
-                print(f"获取股票 {stock_code} 对应指数 {index_code} 数据失败，跳过")
-                continue
-            
-            # 最新收盘价
-            latest_close = df['close'].iloc[-1]
-            
-            result = {
-                '股票代码': stock_code,
-                '股票名称': stock_info.display_name,
-                '最新收盘价': latest_close
-            }
-            
-            # 计算每个时间段的偏离值和涨幅空间
-            for period in days:
-                if len(df) < period + 1 or len(index_df) < period + 1:
-                    continue
-                    
-                # 计算个股涨幅（每日涨幅之和，只累加正涨幅，下跌日忽视）
-                stock_gain = sum(max(0, (df['close'].iloc[-1-i] - df['pre_close'].iloc[-1-i]) / df['pre_close'].iloc[-1-i] * 100) for i in range(period))
-                
-                # 计算大盘涨幅（每日涨幅之和，只累加正涨幅，下跌日忽视）
-                index_gain = sum(max(0, (index_df['close'].iloc[-1-i] - index_df['pre_close'].iloc[-1-i]) / index_df['pre_close'].iloc[-1-i] * 100) for i in range(period))
-                
-                # 计算偏离值
-                deviation = stock_gain - index_gain
-                
-                # 根据证监会规定的异常波动标准计算涨幅空间
-                # 连续3个交易日累计±20%为异常波动
-                # 连续10个交易日累计+100%/-50%为严重异常波动
-                if period == 3:
-                    target_gain = 20.0  # 3日目标涨幅为20%
-                elif period == 10:
-                    target_gain = 100.0  # 10日目标涨幅为100%
-                else:
-                    target_gain = deviation  # 其他周期仍使用偏离值
-                
-                # 计算涨幅空间
-                # 涨幅空间 = 目标涨幅 - 偏离值
-                gain_space = target_gain - deviation
-                
-                # 添加到结果
-                result[f'{period}日个股涨幅(%)'] = round(stock_gain, 2)
-                result[f'{period}日偏离值(%)'] = round(deviation, 2)
-                result[f'{period}日涨幅空间(%)'] = round(gain_space, 2)
-            
-            # 只有当至少计算了一个时间段的数据时才添加到结果
-            if len(result) > 3:
-                result_list.append(result)
-                
-        except Exception as e:
-            print(f"计算股票 {stock_code} 偏离值时出错: {e}")
-            continue
-    
-    # 转换为DataFrame
-    result_df = pd.DataFrame(result_list)
-    
-    if not result_df.empty:
-        print(f"\n计算完成，共分析了 {len(result_df)} 只股票")
-    else:
-        print("\n没有找到符合条件的股票")
-    
-    return result_df
-
-
-def analyze_one_to_two_breakout(include_cy=False):
+def analyze_one_to_two_breakout(yesterday_limit_up, before_yesterday_limit_up, stocks):
     """
     一进二打板策略选股
     
     参数:
-    - include_cy: 是否包含创业板
+    - yesterday_limit_up: 昨天涨停股票列表
+    - before_yesterday_limit_up: 前天涨停股票列表
+    - stocks: 所有股票信息DataFrame
     
     返回:
     - DataFrame: 满足条件的一进二打板股票列表
@@ -476,36 +350,11 @@ def analyze_one_to_two_breakout(include_cy=False):
     
     print("=== 一进二打板策略选股 ===")
     
-    # 获取股票列表
-    all_stocks = get_all_stocks(include_cy)
-    
-    # 获取最近的交易日期（需要至少2个交易日）
-    trading_dates = get_trading_dates(days=2)
-    
-    if not trading_dates or len(trading_dates) < 2:
-        print("错误：无法获取足够的交易日期，分析终止")
-        return pd.DataFrame()
-    
-    yesterday = trading_dates[-1]  # 最近一个交易日
-    before_yesterday = trading_dates[-2]  # 前天
-    
-    print(f"分析时间段: 前天({before_yesterday}) 和 最近一个交易日({yesterday})")
-    
-    # 获取所有股票代码
-    stocks = get_all_securities(types=['stock'], date=None)
-    
-    print(f"\n开始分析最近一个交易日的涨停股票...")
-    
-    # 筛选最近一个交易日的涨停股票
-    yesterday_limit_up = get_daily_limit_up_stocks(yesterday, all_stocks)
-    
     print(f"最近一个交易日涨停股票数量: {len(yesterday_limit_up)}")
+    print(f"前天涨停股票数量: {len(before_yesterday_limit_up)}")
     
     # 获取前天的涨停股票列表（用于检查是否是首板）
-    before_yesterday_limit_up = get_daily_limit_up_stocks(before_yesterday, all_stocks)
     before_yesterday_limit_up_codes = [stock['股票代码'] for stock in before_yesterday_limit_up]
-    
-    print(f"前天涨停股票数量: {len(before_yesterday_limit_up)}")
     
     # 筛选符合条件的首板股票
     qualified_stocks = []
@@ -551,64 +400,6 @@ def analyze_one_to_two_breakout(include_cy=False):
             
             # 筛选流通盘大于20亿的股票
             if market_cap > 20:
-                # 获取封板时间和是否开板信息
-                seal_time = ""
-                has_opening = ""
-                try:
-                    # 使用千问API同时获取封板时间和是否开板
-                    prompt = f"根据同花顺数据告诉我({stock_info.display_name})股票在{yesterday}的涨停封板时间（格式为HH.MM，例如：xx.xx）以及当天是否有过开板（是/否）。请按照以下格式返回：封板时间,是否开板。例如：09.30,是 或 14.55,否。只需要返回格式正确的结果，不要有其他解释或格式。"
-                    llm_result = call_qianwen_api(prompt)
-                    if llm_result:
-                        # 清理结果，确保格式正确
-                        llm_result = llm_result.strip()
-                        # 分割结果
-                        if ',' in llm_result:
-                            parts = llm_result.split(',')
-                            if len(parts) >= 2:
-                                # 处理封板时间
-                                seal_time_part = parts[0].strip()
-                                if ':' in seal_time_part:
-                                    seal_time = seal_time_part.replace(':', '.')
-                                else:
-                                    seal_time = seal_time_part
-                                
-                                # 处理是否开板
-                                has_opening_part = parts[1].strip()
-                                # 确保结果是中文的"是"或"否"
-                                if has_opening_part.lower() in ['yes', 'y', '是']:
-                                    has_opening = "是"
-                                elif has_opening_part.lower() in ['no', 'n', '否']:
-                                    has_opening = "否"
-                                else:
-                                    has_opening = has_opening_part
-                                
-                                print(f"股票 {stock_code} 封板时间: {seal_time}, 是否开板: {has_opening}")
-                            else:
-                                # 如果分割后只有一个部分，可能只有封板时间
-                                seal_time_part = llm_result.strip()
-                                if ':' in seal_time_part:
-                                    seal_time = seal_time_part.replace(':', '.')
-                                else:
-                                    seal_time = seal_time_part
-                                has_opening = "获取失败"
-                                print(f"股票 {stock_code} 封板时间: {seal_time}, 是否开板: 获取失败")
-                        else:
-                            # 如果没有逗号分割，可能只有封板时间
-                            seal_time_part = llm_result.strip()
-                            if ':' in seal_time_part:
-                                seal_time = seal_time_part.replace(':', '.')
-                            else:
-                                seal_time = seal_time_part
-                            has_opening = "获取失败"
-                            print(f"股票 {stock_code} 封板时间: {seal_time}, 是否开板: 获取失败")
-                    else:
-                        seal_time = "获取失败"
-                        has_opening = "获取失败"
-                except Exception as e:
-                    print(f"获取股票 {stock_code} 封板信息时出错: {e}")
-                    seal_time = "获取失败"
-                    has_opening = "获取失败"
-                
                 qualified_stocks.append({
                     '股票代码': stock_code,
                     '股票名称': stock_info.display_name,
@@ -616,8 +407,8 @@ def analyze_one_to_two_breakout(include_cy=False):
                     '换手率(%)': turnover_ratio,
                     '流通盘(亿)': market_cap,
                     '行业板块': stock['行业板块'],
-                    '封板时间': seal_time,
-                    '是否开板': has_opening,
+                    '封板时间': '获取失败',
+                    '是否开板': '获取失败',
                     '主力净买入(万元)': main_force_net_buy
                 })
             else:
@@ -637,113 +428,6 @@ def analyze_one_to_two_breakout(include_cy=False):
         result_df = result_df.sort_values('主力净买入(万元)', ascending=False)
     
     return result_df
-
-def filter_recent_two_days_down(stocks_df):
-    """
-    筛选出最近两个交易日涨幅小于等于0的股票
-    
-    参数:
-    - stocks_df: 满足初始条件的股票DataFrame
-    
-    返回:
-    - DataFrame: 筛选后的股票列表
-    """
-    
-    # 日志：输入数据基本信息
-    print(f"\n=== filter_recent_two_days_down 函数开始执行 ===")
-    print(f"输入股票数量: {len(stocks_df)}")
-    if not stocks_df.empty:
-        print(f"输入股票代码列表: {list(stocks_df['股票代码'])}")
-    
-    if stocks_df.empty:
-        print("输入DataFrame为空，直接返回")
-        print(f"=== filter_recent_two_days_down 函数执行结束 ===")
-        return stocks_df
-    
-    print(f"\n进一步筛选：最近两个交易日涨幅小于等于0的股票...")
-    
-    # 获取最近两个交易日的日期
-    recent_trading_dates = get_trading_dates(days=2)
-    if not recent_trading_dates or len(recent_trading_dates) < 2:
-        print("获取交易日期失败，无法进行进一步筛选")
-        print(f"=== filter_recent_two_days_down 函数执行结束 ===")
-        return stocks_df
-    
-    # 获取最近两个交易日
-    date1 = recent_trading_dates[-2]  # 倒数第二个交易日
-    date2 = recent_trading_dates[-1]  # 最新交易日
-    
-    print(f"检查日期：{date1} 和 {date2}")
-    
-    # 筛选满足条件的股票
-    filtered_stocks = []
-    
-    # 日志：处理进度
-    total_stocks = len(stocks_df)
-    print(f"\n开始处理 {total_stocks} 只股票...")
-    
-    for idx, (_, row) in enumerate(stocks_df.iterrows()):
-        stock_code = row['股票代码']
-        print(f"\n[{idx+1}/{total_stocks}] 处理股票: {stock_code}")
-        
-        try:
-            # 获取最近两个交易日的股票数据，增加起始日期提前天数确保获取到足够数据
-            start_date = (date1 - timedelta(days=5)).strftime('%Y-%m-%d')  # 提前5天开始获取，确保包含足够的交易日
-            end_date = date2.strftime('%Y-%m-%d')
-            
-            print(f"  获取数据日期范围: {start_date} 至 {end_date}")
-            
-            df = get_price(stock_code, 
-                           start_date=start_date, 
-                           end_date=end_date, 
-                           frequency='daily', 
-                           fields=['close', 'open'])
-            
-            print(f"  获取到 {len(df)} 天的股票数据")
-            
-            if not df.empty and len(df) >= 3:  # 需要至少3天数据来计算两天的涨跌幅
-                # 计算最近两个交易日的涨跌幅
-                df['price_change_ratio'] = df['close'].pct_change() * 100
-                
-                # 获取最近两个交易日的涨跌幅
-                change_date1 = df.iloc[-2]['price_change_ratio']  # 倒数第二天的涨跌幅
-                change_date2 = df.iloc[-1]['price_change_ratio']  # 最新一天的涨跌幅
-                
-                print(f"  倒数第二个交易日({date1})涨跌幅: {change_date1:.2f}%")
-                print(f"  最新交易日({date2})涨跌幅: {change_date2:.2f}%")
-                
-                # 检查是否满足条件
-                if change_date1 <= 0 or change_date2 <= 0:
-                    print(f"  ✅ 满足条件：至少有一天涨幅<=0")
-                    row_copy = row.copy()
-                    row_copy['最近两日涨跌幅'] = f"{change_date1:.2f}%/{change_date2:.2f}%"
-                    filtered_stocks.append(row_copy)
-                    print(f"  当前已筛选出 {len(filtered_stocks)} 只满足条件的股票")
-                else:
-                    print(f"  ❌ 不满足条件：两天涨幅都>0")
-            else:
-                print(f"  ❌ 数据不足：需要至少3天数据，仅获取到{len(df)}天")
-        
-        except Exception as e:
-            print(f"  ❌ 获取股票数据时出错: {e}")
-            continue
-    
-    # 详细的筛选结果日志
-    print(f"\n=== 筛选结果统计 ===")
-    print(f"输入股票总数: {total_stocks}")
-    print(f"满足条件的股票数: {len(filtered_stocks)}")
-    
-    if filtered_stocks:
-        result_df = pd.DataFrame(filtered_stocks)
-        print(f"\n筛选完成，共找到 {len(result_df)} 只最近两个交易日涨幅均小于等于0的股票")
-        print(f"满足条件的股票代码: {list(result_df['股票代码'])}")
-    else:
-        print("\n没有找到满足条件的股票")
-        result_df = pd.DataFrame()
-    
-    print(f"=== filter_recent_two_days_down 函数执行结束 ===")
-    return result_df
-
 
 def display_results(stocks_df, days=None, min_rise_days=None):
     """显示一进二打板策略选股结果"""
@@ -786,107 +470,6 @@ def display_results(stocks_df, days=None, min_rise_days=None):
     pd.reset_option('display.max_columns')
     pd.reset_option('display.max_colwidth')
     pd.reset_option('display.colheader_justify')
-
-
-
-def call_qianwen_api(prompt, model="qwen-turbo", api_key=QIAN_WEN_API, base_url="https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"):
-    """
-    调用千问API获取AI响应
-    
-    参数:
-    - prompt: 提示词文本
-    - model: 模型名称，默认为ernie-3.5-turbo
-    - api_key: API密钥，需要用户替换为自己的密钥
-    - base_url: API端点，默认为百度文心一言的聊天接口
-    
-    返回:
-    - str: AI生成的响应文本
-    """
-    
-    try:
-        # 设置请求头，千问Turbo需要使用Authorization头进行认证
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {api_key}"
-        }
-        
-        # 构建请求体，千问Turbo的API格式
-        payload = {
-            "model": model,
-            "input": {
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
-            },
-            "parameters": {
-                "temperature": 0.7,
-                "max_tokens": 2048,
-                "top_p": 0.95
-            }
-        }
-        
-        # 发送POST请求
-        response = requests.post(base_url, headers=headers, data=json.dumps(payload))
-        
-        # 解析响应
-        response_data = response.json()
-        
-        # 检查响应是否成功
-        if "output" in response_data and "text" in response_data["output"]:
-            return response_data["output"]["text"]
-        else:
-            print(f"千问API调用失败: {response_data.get('message', '未知错误')}")
-            return None
-            
-    except Exception as e:
-        print(f"调用千问API时出错: {e}")
-        return None
-
-
-def analyze_stock_themes(filtered_stocks_df, api_key=QIAN_WEN_API):
-    """
-    分析筛选后的股票，获取每只股票的核心题材
-    
-    参数:
-    - filtered_stocks_df: filter_recent_two_days_down函数筛选后的股票DataFrame
-    - api_key: 千问API密钥
-    
-    返回:
-    - DataFrame: 添加了核心题材信息的股票DataFrame
-    """
-    
-    if filtered_stocks_df.empty:
-        print("没有筛选出符合条件的股票，无法进行题材分析")
-        return filtered_stocks_df
-    
-    
-    # 创建结果DataFrame的副本
-    result_df = filtered_stocks_df.copy()
-    
-    # 遍历每只股票
-    for idx, row in result_df.iterrows():
-        stock_code = row['股票代码']
-        stock_name = row['股票名称']
-        
-        # 构建提示词
-        prompt = f"请分析股票{stock_code}({stock_name})的核心题材，参考东方财富和同花顺的概念题材热度索引，只列出2-3个最核心、其中第一个题材应该是最近影响他涨停原因的题材，不要有其他解释。格式为：题材1,题材2,题材3"
-        
-        # 调用千问API
-        themes = call_qianwen_api(prompt, api_key=api_key)
-        
-        if themes:
-
-            # 替换行业板块列为核心题材
-            result_df.at[idx, '行业板块'] = themes
-        else:
-            print(f"  获取核心题材失败")
-            result_df.at[idx, '行业板块'] = '获取失败'
-    
-    print(f"\n=== 股票核心题材分析完成 ===")
-    return result_df
 
 
 
@@ -1106,9 +689,6 @@ if __name__ == "__main__":
     # 运行分析
     print("开始一进二打板策略选股...")
     
-    # 获取股票列表
-    all_stocks = get_all_stocks(include_cy=False)
-    
     # 获取最近的交易日期（需要至少2个交易日）
     trading_dates = get_trading_dates(days=2)
     
@@ -1119,6 +699,9 @@ if __name__ == "__main__":
         before_yesterday = trading_dates[-2]  # 前天
         
         print(f"分析时间段: 前天({before_yesterday}) 和 最近一个交易日({yesterday})")
+        
+        # 获取股票列表
+        all_stocks = get_all_stocks(include_cy=False)
         
         # 获取最近一个交易日的涨停股票
         yesterday_limit_up = get_daily_limit_up_stocks(yesterday, all_stocks)
@@ -1142,16 +725,7 @@ if __name__ == "__main__":
     # 分析一进二打板股票
     result_df = analyze_one_to_two_breakout(include_cy=False)
     
-    # 分析股票核心题材
-    result_df_with_themes = analyze_stock_themes(result_df)
-    
     # 显示结果
-    display_results(result_df_with_themes)
+    display_results(result_df)
     
-    print(f"\n分析完成！找到 {len(result_df_with_themes)} 只符合条件的一进二打板股票。")
-    
-    # 如果有核心题材信息，额外显示
-    if not result_df_with_themes.empty and '核心题材' in result_df_with_themes.columns:
-        print("\n=== 股票核心题材信息 ===")
-        for idx, row in result_df_with_themes.iterrows():
-            print(f"{row['股票代码']} {row['股票名称']}: {row['核心题材']}")
+    print(f"\n分析完成！找到 {len(result_df)} 只符合条件的一进二打板股票。")

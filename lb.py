@@ -1547,7 +1547,6 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                                     <th>板块名称</th>
                                     <th>板块代码</th>
                                     <th>最新价</th>
-                                    <th>涨跌额</th>
                                     <th>涨跌幅(%)</th>
                                     <th>总市值(亿)</th>
                                     <th>换手率(%)</th>
@@ -1567,7 +1566,6 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                                     <td>{row['板块名称']}</td>
                                     <td>{row['板块代码']}</td>
                                     <td>{row['最新价']:.2f}</td>
-                                    <td>{row['涨跌额']:.2f}</td>
                                     <td class="{change_class}">{row['涨跌幅']:.2f}</td>
                                     <td>{row['总市值']/100000000:.2f}</td>
                                     <td>{row['换手率']:.2f}</td>
@@ -1580,7 +1578,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
     else:
         html += """
                                 <tr>
-                                    <td colspan="12" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                    <td colspan="11" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
                                 </tr>
         """
     

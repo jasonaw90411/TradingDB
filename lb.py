@@ -1135,14 +1135,16 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             change_pct = row.get('行业-涨跌幅', '0%')
             if isinstance(change_pct, str) and '%' in change_pct:
                 change_value = float(change_pct.replace('%', ''))
+                display_pct = change_pct
             else:
                 change_value = float(change_pct) if pd.notna(change_pct) else 0
+                display_pct = f"{change_value:.2f}%"
             html += f"""
                                 <tr>
                                     <td>{idx + 1}</td>
                                     <td>{row['行业']}</td>
                                     <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                                    <td class="{'positive' if change_value > 0 else 'negative'}">{change_pct}</td>
+                                    <td class="{'positive' if change_value > 0 else 'negative'}">{display_pct}</td>
                                 </tr>
             """
     else:
@@ -1314,14 +1316,16 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             change_pct = row.get('行业-涨跌幅', '0%')
             if isinstance(change_pct, str) and '%' in change_pct:
                 change_value = float(change_pct.replace('%', ''))
+                display_pct = change_pct
             else:
                 change_value = float(change_pct) if pd.notna(change_pct) else 0
+                display_pct = f"{change_value:.2f}%"
             html += f"""
                                 <tr>
                                     <td>{idx + 1}</td>
                                     <td>{row['行业']}</td>
                                     <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                                    <td class="{'positive' if change_value > 0 else 'negative'}">{change_pct}</td>
+                                    <td class="{'positive' if change_value > 0 else 'negative'}">{display_pct}</td>
                                 </tr>
             """
     else:

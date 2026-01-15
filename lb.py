@@ -3,6 +3,8 @@ import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import akshare as ak
+import requests
+import json 
 
 # 全局变量定义
 MIN_LIMIT_UP_DAYS = 3
@@ -32,12 +34,105 @@ def get_ths_news():
         return pd.DataFrame()
 
 
+def get_ths_limit_up_analysis():
+    """获取同花顺涨停异动解读数据"""
+    try:
+        df = ak.stock_zt_pool_em(date=datetime.now().strftime('%Y%m%d'))
+        print(f"成功获取同花顺涨停异动解读数据，共 {len(df)} 条")
+        return df
+    except Exception as e:
+        print(f"获取同花顺涨停异动解读失败: {e}")
+        return pd.DataFrame()
+
+
+def analyze_limit_up_reason_with_llm(stock_name, stock_code, zt_pool_data=None):
+    """使用阿里千文turbo模型分析涨停原因"""
+    try:
+        if zt_pool_data is None or zt_pool_data.empty:
+            zt_pool_data = get_ths_limit_up_analysis()
+        
+        stock_info = ""
+        if not zt_pool_data.empty:
+            stock_row = zt_pool_data[(zt_pool_data['名称'] == stock_name) | (zt_pool_data['代码'] == stock_code)]
+            if not stock_row.empty:
+                stock_info = stock_row.iloc[0].to_dict()
+        
+        prompt = f"""请分析股票{stock_name}({stock_code})的涨停原因。
+
+        股票信息：{stock_info}
+
+        依据所属概念板块+同花顺涨停解读总结，要求：
+        1.仅输出涨停核心热点概念和原因，直接说结果不要有无任何多余文字描述
+        2.极致简洁,不超过30字,无标点,无废话"""
+
+        url = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
+        headers = {
+            "Authorization": f"Bearer {ALI_QIAN_WEN}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": "qwen-turbo",
+            "input": {
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            },
+            "parameters": {
+                "max_tokens": 50,
+                "temperature": 0,    # 重中之重：0=绝对精准输出，不脑补、不废话、不发散
+                "top_p": 0.9       # 0.9=90%概率质量，1=100%概率质量        
+            }
+        }
+        
+        response = requests.post(url, headers=headers, json=data, timeout=30)
+        
+        if response.status_code == 200:
+            result = response.json()
+            reason = result['output']['text'].strip()
+            if len(reason) > 20:
+                reason = reason[:20]
+            print(f"股票{stock_name}涨停原因分析: {reason}")
+            return reason
+        else:
+            print(f"LLM调用失败: {response.status_code} - {response.text}")
+            return "分析失败"
+            
+    except ImportError:
+        print("未安装requests库，请先安装: pip install requests")
+        return "未安装requests"
+    except Exception as e:
+        print(f"LLM分析涨停原因失败: {e}")
+        return "分析失败"
+
+
 def get_today_limit_up_pool():
     """获取今天涨停股池数据"""
     try:
         today = datetime.now().strftime('%Y%m%d')
         df = ak.stock_zt_pool_em(date=today)
         print(f"成功获取今天涨停股池数据，共 {len(df)} 只股票")
+        
+        if not df.empty:
+            print("\n开始分析涨停原因...")
+            zt_pool_data = get_ths_limit_up_analysis()
+            
+            limit_up_reasons = []
+            for idx, row in df.iterrows():
+                stock_name = row.get('名称', '')
+                stock_code = row.get('代码', '')
+                
+                if stock_name and stock_code:
+                    reason = analyze_limit_up_reason_with_llm(stock_name, stock_code, zt_pool_data)
+                    limit_up_reasons.append(reason)
+                else:
+                    limit_up_reasons.append("未知")
+            
+            df['涨停原因'] = limit_up_reasons
+            print(f"涨停原因分析完成，共分析 {len(limit_up_reasons)} 只股票")
+        
         return df
     except Exception as e:
         print(f"获取今天涨停股池失败: {e}")
@@ -961,12 +1056,14 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                             <th>涨停统计</th>
                             <th>连板数</th>
                             <th>所属行业</th>
+                            <th>涨停原因</th>
                         </tr>
     """
     
     if not today_pool.empty:
         for _, row in today_pool.iterrows():
             change_class = 'positive' if row['涨跌幅'] > 0 else 'negative'
+            limit_up_reason = row.get('涨停原因', '未知')
             html += f"""
                         <tr>
                             <td>{int(row['序号'])}</td>
@@ -984,12 +1081,13 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                             <td>{row['涨停统计']}</td>
                             <td>{int(row['连板数'])}</td>
                             <td>{row['所属行业']}</td>
+                            <td style="color: #e74c3c; font-weight: 500;">{limit_up_reason}</td>
                         </tr>
             """
     else:
         html += """
                         <tr>
-                            <td colspan="16" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                            <td colspan="17" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
                         </tr>
         """
     
@@ -1002,6 +1100,44 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             <div class="section">
                 <h2>📊 概念资金流排行</h2>
                 <div style="display: flex; gap: 10px; width: 100%; overflow-x: auto;">
+                    <div style="flex: 1; min-width: 0;">
+                        <h3>即时排行</h3>
+                        <div class="table-container" style="width: 100%;">
+                            <table>
+                                <tr>
+                                    <th style="width: 15%;">排名</th>
+                                    <th style="width: 55%;">概念板块</th>
+                                    <th style="width: 15%;">净额(亿)</th>
+                                    <th style="width: 15%;">阶段涨跌幅</th>
+                                </tr>
+                                """
+    if capital_flow_data and "即时" in capital_flow_data and not capital_flow_data["即时"].empty:
+        sorted_df = capital_flow_data["即时"].sort_values(by="净额", ascending=False).head(20)
+        for idx, row in sorted_df.iterrows():
+            change_pct = row.get('行业-涨跌幅', '0%')
+            if isinstance(change_pct, str) and '%' in change_pct:
+                change_value = float(change_pct.replace('%', ''))
+            else:
+                change_value = float(change_pct) if pd.notna(change_pct) else 0
+            html += f"""
+                                <tr>
+                                    <td>{idx + 1}</td>
+                                    <td>{row['行业']}</td>
+                                    <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
+                                    <td class="{'positive' if change_value > 0 else 'negative'}">{change_pct}</td>
+                                </tr>
+            """
+    else:
+        html += """
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                </tr>
+        """
+    html += """
+                            </table>
+                        </div>
+                    </div>
+                    
                     <div style="flex: 1; min-width: 0;">
                         <h3>3日排行</h3>
                         <div class="table-container" style="width: 100%;">
@@ -1143,6 +1279,44 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             <div class="section">
                 <h2>📊 行业资金流排行</h2>
                 <div style="display: flex; gap: 10px; width: 100%; overflow-x: auto;">
+                    <div style="flex: 1; min-width: 0;">
+                        <h3>即时排行</h3>
+                        <div class="table-container" style="width: 100%;">
+                            <table>
+                                <tr>
+                                    <th style="width: 15%;">排名</th>
+                                    <th style="width: 55%;">行业板块</th>
+                                    <th style="width: 15%;">净额(亿)</th>
+                                    <th style="width: 15%;">阶段涨跌幅</th>
+                                </tr>
+                                """
+    if industry_flow_data and "即时" in industry_flow_data and not industry_flow_data["即时"].empty:
+        sorted_df = industry_flow_data["即时"].sort_values(by="净额", ascending=False).head(20)
+        for idx, row in sorted_df.iterrows():
+            change_pct = row.get('行业-涨跌幅', '0%')
+            if isinstance(change_pct, str) and '%' in change_pct:
+                change_value = float(change_pct.replace('%', ''))
+            else:
+                change_value = float(change_pct) if pd.notna(change_pct) else 0
+            html += f"""
+                                <tr>
+                                    <td>{idx + 1}</td>
+                                    <td>{row['行业']}</td>
+                                    <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
+                                    <td class="{'positive' if change_value > 0 else 'negative'}">{change_pct}</td>
+                                </tr>
+            """
+    else:
+        html += """
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                </tr>
+        """
+    html += """
+                            </table>
+                        </div>
+                    </div>
+                    
                     <div style="flex: 1; min-width: 0;">
                         <h3>3日排行</h3>
                         <div class="table-container" style="width: 100%;">

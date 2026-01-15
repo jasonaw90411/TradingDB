@@ -1123,10 +1123,11 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th style="width: 15%;">排名</th>
-                                    <th style="width: 55%;">概念板块</th>
-                                    <th style="width: 15%;">净额(亿)</th>
-                                    <th style="width: 15%;">阶段涨跌幅</th>
+                                    <th style="width: 12%;">排名</th>
+                                    <th style="width: 48%;">概念板块</th>
+                                    <th style="width: 12%;">净额(亿)</th>
+                                    <th style="width: 12%;">阶段涨跌幅</th>
+                                    <th style="width: 16%;">主力净流入占比(%)</th>
                                 </tr>
                                 """
     if capital_flow_data and "即时" in capital_flow_data and not capital_flow_data["即时"].empty:
@@ -1139,18 +1140,29 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             else:
                 change_value = float(change_pct) if pd.notna(change_pct) else 0
                 display_pct = f"{change_value:.2f}%"
+            
+            inflow = row.get('流入资金', 0)
+            outflow = row.get('流出资金', 0)
+            net_amount = row.get('净额', 0)
+            if inflow + outflow != 0:
+                net_flow_ratio = (net_amount / (inflow + outflow)) * 100
+            else:
+                net_flow_ratio = 0
+            net_flow_class = 'positive' if net_flow_ratio > 0 else 'negative'
+            
             html += f"""
                                 <tr>
                                     <td>{idx + 1}</td>
                                     <td>{row['行业']}</td>
                                     <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
                                     <td class="{'positive' if change_value > 0 else 'negative'}">{display_pct}</td>
+                                    <td class="{net_flow_class}">{net_flow_ratio:.2f}</td>
                                 </tr>
             """
     else:
         html += """
                                 <tr>
-                                    <td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                    <td colspan="5" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
                                 </tr>
         """
     html += """
@@ -1163,28 +1175,45 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th style="width: 15%;">排名</th>
-                                    <th style="width: 55%;">概念板块</th>
-                                    <th style="width: 15%;">净额(亿)</th>
-                                    <th style="width: 15%;">阶段涨跌幅</th>
+                                    <th style="width: 12%;">排名</th>
+                                    <th style="width: 48%;">概念板块</th>
+                                    <th style="width: 12%;">净额(亿)</th>
+                                    <th style="width: 12%;">阶段涨跌幅</th>
+                                    <th style="width: 16%;">主力净流入占比(%)</th>
                                 </tr>
                                 """
     if capital_flow_data and "3日" in capital_flow_data and not capital_flow_data["3日"].empty:
         # 按净流入降序排列
         sorted_df = capital_flow_data["3日"].sort_values(by="净额", ascending=False).head(20)
         for idx, row in sorted_df.iterrows():
+            change_pct = row.get('阶段涨跌幅', '0%')
+            if isinstance(change_pct, str) and '%' in change_pct:
+                change_value = float(change_pct.replace('%', ''))
+            else:
+                change_value = float(change_pct) if pd.notna(change_pct) else 0
+            
+            inflow = row.get('流入资金', 0)
+            outflow = row.get('流出资金', 0)
+            net_amount = row.get('净额', 0)
+            if inflow + outflow != 0:
+                net_flow_ratio = (net_amount / (inflow + outflow)) * 100
+            else:
+                net_flow_ratio = 0
+            net_flow_class = 'positive' if net_flow_ratio > 0 else 'negative'
+            
             html += f"""
                                 <tr>
                                     <td>{idx + 1}</td>
                                     <td>{row['行业']}</td>
                                     <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                                    <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                                    <td class="{'positive' if change_value > 0 else 'negative'}">{change_pct}</td>
+                                    <td class="{net_flow_class}">{net_flow_ratio:.2f}</td>
                                 </tr>
             """
     else:
         html += """
                                 <tr>
-                                    <td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                    <td colspan="5" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
                                 </tr>
         """
     html += """
@@ -1197,28 +1226,45 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th style="width: 15%;">排名</th>
-                                    <th style="width: 55%;">概念板块</th>
-                                    <th style="width: 15%;">净额(亿)</th>
-                                    <th style="width: 15%;">阶段涨跌幅</th>
+                                    <th style="width: 12%;">排名</th>
+                                    <th style="width: 48%;">概念板块</th>
+                                    <th style="width: 12%;">净额(亿)</th>
+                                    <th style="width: 12%;">阶段涨跌幅</th>
+                                    <th style="width: 16%;">主力净流入占比(%)</th>
                                 </tr>
                                 """
     if capital_flow_data and "5日" in capital_flow_data and not capital_flow_data["5日"].empty:
         # 按净流入降序排列
         sorted_df = capital_flow_data["5日"].sort_values(by="净额", ascending=False).head(20)
         for idx, row in sorted_df.iterrows():
+            change_pct = row.get('阶段涨跌幅', '0%')
+            if isinstance(change_pct, str) and '%' in change_pct:
+                change_value = float(change_pct.replace('%', ''))
+            else:
+                change_value = float(change_pct) if pd.notna(change_pct) else 0
+            
+            inflow = row.get('流入资金', 0)
+            outflow = row.get('流出资金', 0)
+            net_amount = row.get('净额', 0)
+            if inflow + outflow != 0:
+                net_flow_ratio = (net_amount / (inflow + outflow)) * 100
+            else:
+                net_flow_ratio = 0
+            net_flow_class = 'positive' if net_flow_ratio > 0 else 'negative'
+            
             html += f"""
                                 <tr>
                                     <td>{idx + 1}</td>
                                     <td>{row['行业']}</td>
                                     <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                                    <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                                    <td class="{'positive' if change_value > 0 else 'negative'}">{change_pct}</td>
+                                    <td class="{net_flow_class}">{net_flow_ratio:.2f}</td>
                                 </tr>
             """
     else:
         html += """
                                 <tr>
-                                    <td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                    <td colspan="5" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
                                 </tr>
         """
     html += """
@@ -1231,28 +1277,45 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th style="width: 15%;">排名</th>
-                                    <th style="width: 55%;">概念板块</th>
-                                    <th style="width: 15%;">净额(亿)</th>
-                                    <th style="width: 15%;">阶段涨跌幅</th>
+                                    <th style="width: 12%;">排名</th>
+                                    <th style="width: 48%;">概念板块</th>
+                                    <th style="width: 12%;">净额(亿)</th>
+                                    <th style="width: 12%;">阶段涨跌幅</th>
+                                    <th style="width: 16%;">主力净流入占比(%)</th>
                                 </tr>
                                 """
     if capital_flow_data and "10日" in capital_flow_data and not capital_flow_data["10日"].empty:
         # 按净流入降序排列
         sorted_df = capital_flow_data["10日"].sort_values(by="净额", ascending=False).head(20)
         for idx, row in sorted_df.iterrows():
+            change_pct = row.get('阶段涨跌幅', '0%')
+            if isinstance(change_pct, str) and '%' in change_pct:
+                change_value = float(change_pct.replace('%', ''))
+            else:
+                change_value = float(change_pct) if pd.notna(change_pct) else 0
+            
+            inflow = row.get('流入资金', 0)
+            outflow = row.get('流出资金', 0)
+            net_amount = row.get('净额', 0)
+            if inflow + outflow != 0:
+                net_flow_ratio = (net_amount / (inflow + outflow)) * 100
+            else:
+                net_flow_ratio = 0
+            net_flow_class = 'positive' if net_flow_ratio > 0 else 'negative'
+            
             html += f"""
                                 <tr>
                                     <td>{idx + 1}</td>
                                     <td>{row['行业']}</td>
                                     <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                                    <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                                    <td class="{'positive' if change_value > 0 else 'negative'}">{change_pct}</td>
+                                    <td class="{net_flow_class}">{net_flow_ratio:.2f}</td>
                                 </tr>
             """
     else:
         html += """
                                 <tr>
-                                    <td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                    <td colspan="5" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
                                 </tr>
         """
     html += """
@@ -1265,22 +1328,39 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th style="width: 15%;">排名</th>
-                                    <th style="width: 55%;">概念板块</th>
-                                    <th style="width: 15%;">净额(亿)</th>
-                                    <th style="width: 15%;">阶段涨跌幅</th>
+                                    <th style="width: 12%;">排名</th>
+                                    <th style="width: 48%;">概念板块</th>
+                                    <th style="width: 12%;">净额(亿)</th>
+                                    <th style="width: 12%;">阶段涨跌幅</th>
+                                    <th style="width: 16%;">主力净流入占比(%)</th>
                                 </tr>
                                 """
     if capital_flow_data and "20日" in capital_flow_data and not capital_flow_data["20日"].empty:
         # 按净流入降序排列
         sorted_df = capital_flow_data["20日"].sort_values(by="净额", ascending=False).head(20)
         for idx, row in sorted_df.iterrows():
+            change_pct = row.get('阶段涨跌幅', '0%')
+            if isinstance(change_pct, str) and '%' in change_pct:
+                change_value = float(change_pct.replace('%', ''))
+            else:
+                change_value = float(change_pct) if pd.notna(change_pct) else 0
+            
+            inflow = row.get('流入资金', 0)
+            outflow = row.get('流出资金', 0)
+            net_amount = row.get('净额', 0)
+            if inflow + outflow != 0:
+                net_flow_ratio = (net_amount / (inflow + outflow)) * 100
+            else:
+                net_flow_ratio = 0
+            net_flow_class = 'positive' if net_flow_ratio > 0 else 'negative'
+            
             html += f"""
                                 <tr>
                                     <td>{idx + 1}</td>
                                     <td>{row['行业']}</td>
                                     <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                                    <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                                    <td class="{'positive' if change_value > 0 else 'negative'}">{change_pct}</td>
+                                    <td class="{net_flow_class}">{net_flow_ratio:.2f}</td>
                                 </tr>
             """
     else:
@@ -1304,10 +1384,11 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th style="width: 15%;">排名</th>
-                                    <th style="width: 55%;">行业板块</th>
-                                    <th style="width: 15%;">净额(亿)</th>
-                                    <th style="width: 15%;">阶段涨跌幅</th>
+                                    <th style="width: 12%;">排名</th>
+                                    <th style="width: 48%;">行业板块</th>
+                                    <th style="width: 12%;">净额(亿)</th>
+                                    <th style="width: 12%;">阶段涨跌幅</th>
+                                    <th style="width: 16%;">主力净流入占比(%)</th>
                                 </tr>
                                 """
     if industry_flow_data and "即时" in industry_flow_data and not industry_flow_data["即时"].empty:
@@ -1320,12 +1401,23 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             else:
                 change_value = float(change_pct) if pd.notna(change_pct) else 0
                 display_pct = f"{change_value:.2f}%"
+            
+            inflow = row.get('流入资金', 0)
+            outflow = row.get('流出资金', 0)
+            net_amount = row.get('净额', 0)
+            if inflow + outflow != 0:
+                net_flow_ratio = (net_amount / (inflow + outflow)) * 100
+            else:
+                net_flow_ratio = 0
+            net_flow_class = 'positive' if net_flow_ratio > 0 else 'negative'
+            
             html += f"""
                                 <tr>
                                     <td>{idx + 1}</td>
                                     <td>{row['行业']}</td>
                                     <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
                                     <td class="{'positive' if change_value > 0 else 'negative'}">{display_pct}</td>
+                                    <td class="{net_flow_class}">{net_flow_ratio:.2f}</td>
                                 </tr>
             """
     else:
@@ -1344,27 +1436,45 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th style="width: 15%;">排名</th>
-                                    <th style="width: 55%;">行业板块</th>
-                                    <th style="width: 15%;">净额(亿)</th>
-                                    <th style="width: 15%;">阶段涨跌幅</th>
+                                    <th style="width: 12%;">排名</th>
+                                    <th style="width: 48%;">行业板块</th>
+                                    <th style="width: 12%;">净额(亿)</th>
+                                    <th style="width: 12%;">阶段涨跌幅</th>
+                                    <th style="width: 16%;">主力净流入占比(%)</th>
                                 </tr>
                                 """
     if industry_flow_data and "3日" in industry_flow_data and not industry_flow_data["3日"].empty:
+        # 按净流入降序排列
         sorted_df = industry_flow_data["3日"].sort_values(by="净额", ascending=False).head(20)
         for idx, row in sorted_df.iterrows():
+            change_pct = row.get('阶段涨跌幅', '0%')
+            if isinstance(change_pct, str) and '%' in change_pct:
+                change_value = float(change_pct.replace('%', ''))
+            else:
+                change_value = float(change_pct) if pd.notna(change_pct) else 0
+            
+            inflow = row.get('流入资金', 0)
+            outflow = row.get('流出资金', 0)
+            net_amount = row.get('净额', 0)
+            if inflow + outflow != 0:
+                net_flow_ratio = (net_amount / (inflow + outflow)) * 100
+            else:
+                net_flow_ratio = 0
+            net_flow_class = 'positive' if net_flow_ratio > 0 else 'negative'
+            
             html += f"""
                                 <tr>
                                     <td>{idx + 1}</td>
                                     <td>{row['行业']}</td>
                                     <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                                    <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                                    <td class="{'positive' if change_value > 0 else 'negative'}">{change_pct}</td>
+                                    <td class="{net_flow_class}">{net_flow_ratio:.2f}</td>
                                 </tr>
             """
     else:
         html += """
                                 <tr>
-                                    <td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                    <td colspan="5" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
                                 </tr>
         """
     html += """
@@ -1377,27 +1487,45 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th style="width: 15%;">排名</th>
-                                    <th style="width: 55%;">行业板块</th>
-                                    <th style="width: 15%;">净额(亿)</th>
-                                    <th style="width: 15%;">阶段涨跌幅</th>
+                                    <th style="width: 12%;">排名</th>
+                                    <th style="width: 48%;">行业板块</th>
+                                    <th style="width: 12%;">净额(亿)</th>
+                                    <th style="width: 12%;">阶段涨跌幅</th>
+                                    <th style="width: 16%;">主力净流入占比(%)</th>
                                 </tr>
                                 """
     if industry_flow_data and "5日" in industry_flow_data and not industry_flow_data["5日"].empty:
+        # 按净流入降序排列
         sorted_df = industry_flow_data["5日"].sort_values(by="净额", ascending=False).head(20)
         for idx, row in sorted_df.iterrows():
+            change_pct = row.get('阶段涨跌幅', '0%')
+            if isinstance(change_pct, str) and '%' in change_pct:
+                change_value = float(change_pct.replace('%', ''))
+            else:
+                change_value = float(change_pct) if pd.notna(change_pct) else 0
+            
+            inflow = row.get('流入资金', 0)
+            outflow = row.get('流出资金', 0)
+            net_amount = row.get('净额', 0)
+            if inflow + outflow != 0:
+                net_flow_ratio = (net_amount / (inflow + outflow)) * 100
+            else:
+                net_flow_ratio = 0
+            net_flow_class = 'positive' if net_flow_ratio > 0 else 'negative'
+            
             html += f"""
                                 <tr>
                                     <td>{idx + 1}</td>
                                     <td>{row['行业']}</td>
                                     <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                                    <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                                    <td class="{'positive' if change_value > 0 else 'negative'}">{change_pct}</td>
+                                    <td class="{net_flow_class}">{net_flow_ratio:.2f}</td>
                                 </tr>
             """
     else:
         html += """
                                 <tr>
-                                    <td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                    <td colspan="5" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
                                 </tr>
         """
     html += """
@@ -1410,27 +1538,45 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th style="width: 15%;">排名</th>
-                                    <th style="width: 55%;">行业板块</th>
-                                    <th style="width: 15%;">净额(亿)</th>
-                                    <th style="width: 15%;">阶段涨跌幅</th>
+                                    <th style="width: 12%;">排名</th>
+                                    <th style="width: 48%;">行业板块</th>
+                                    <th style="width: 12%;">净额(亿)</th>
+                                    <th style="width: 12%;">阶段涨跌幅</th>
+                                    <th style="width: 16%;">主力净流入占比(%)</th>
                                 </tr>
                                 """
     if industry_flow_data and "10日" in industry_flow_data and not industry_flow_data["10日"].empty:
+        # 按净流入降序排列
         sorted_df = industry_flow_data["10日"].sort_values(by="净额", ascending=False).head(20)
         for idx, row in sorted_df.iterrows():
+            change_pct = row.get('阶段涨跌幅', '0%')
+            if isinstance(change_pct, str) and '%' in change_pct:
+                change_value = float(change_pct.replace('%', ''))
+            else:
+                change_value = float(change_pct) if pd.notna(change_pct) else 0
+            
+            inflow = row.get('流入资金', 0)
+            outflow = row.get('流出资金', 0)
+            net_amount = row.get('净额', 0)
+            if inflow + outflow != 0:
+                net_flow_ratio = (net_amount / (inflow + outflow)) * 100
+            else:
+                net_flow_ratio = 0
+            net_flow_class = 'positive' if net_flow_ratio > 0 else 'negative'
+            
             html += f"""
                                 <tr>
                                     <td>{idx + 1}</td>
                                     <td>{row['行业']}</td>
                                     <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                                    <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                                    <td class="{'positive' if change_value > 0 else 'negative'}">{change_pct}</td>
+                                    <td class="{net_flow_class}">{net_flow_ratio:.2f}</td>
                                 </tr>
             """
     else:
         html += """
                                 <tr>
-                                    <td colspan="4" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                    <td colspan="5" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
                                 </tr>
         """
     html += """
@@ -1443,21 +1589,39 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         <div class="table-container" style="width: 100%;">
                             <table>
                                 <tr>
-                                    <th style="width: 15%;">排名</th>
-                                    <th style="width: 55%;">行业板块</th>
-                                    <th style="width: 15%;">净额(亿)</th>
-                                    <th style="width: 15%;">阶段涨跌幅</th>
+                                    <th style="width: 12%;">排名</th>
+                                    <th style="width: 48%;">行业板块</th>
+                                    <th style="width: 12%;">净额(亿)</th>
+                                    <th style="width: 12%;">阶段涨跌幅</th>
+                                    <th style="width: 16%;">主力净流入占比(%)</th>
                                 </tr>
                                 """
     if industry_flow_data and "20日" in industry_flow_data and not industry_flow_data["20日"].empty:
+        # 按净流入降序排列
         sorted_df = industry_flow_data["20日"].sort_values(by="净额", ascending=False).head(20)
         for idx, row in sorted_df.iterrows():
+            change_pct = row.get('阶段涨跌幅', '0%')
+            if isinstance(change_pct, str) and '%' in change_pct:
+                change_value = float(change_pct.replace('%', ''))
+            else:
+                change_value = float(change_pct) if pd.notna(change_pct) else 0
+            
+            inflow = row.get('流入资金', 0)
+            outflow = row.get('流出资金', 0)
+            net_amount = row.get('净额', 0)
+            if inflow + outflow != 0:
+                net_flow_ratio = (net_amount / (inflow + outflow)) * 100
+            else:
+                net_flow_ratio = 0
+            net_flow_class = 'positive' if net_flow_ratio > 0 else 'negative'
+            
             html += f"""
                                 <tr>
                                     <td>{idx + 1}</td>
                                     <td>{row['行业']}</td>
                                     <td class="{'positive' if row['净额'] > 0 else 'negative'}">{row['净额']:.2f}</td>
-                                    <td class="{'positive' if float(row['阶段涨跌幅'].replace('%', '')) > 0 else 'negative'}">{row['阶段涨跌幅']}</td>
+                                    <td class="{'positive' if change_value > 0 else 'negative'}">{change_pct}</td>
+                                    <td class="{net_flow_class}">{net_flow_ratio:.2f}</td>
                                 </tr>
             """
     else:

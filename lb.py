@@ -139,6 +139,23 @@ def get_today_limit_up_pool():
         return pd.DataFrame()
 
 
+def get_stock_url(stock_code):
+    """根据股票代码生成东方财富跳转URL"""
+    if not stock_code:
+        return "#"
+    
+    stock_code_str = str(stock_code)
+    
+    if stock_code_str.startswith('6'):
+        return f"https://quote.eastmoney.com/sh{stock_code_str}.html"
+    elif stock_code_str.startswith('0') or stock_code_str.startswith('3'):
+        return f"https://quote.eastmoney.com/sz{stock_code_str}.html"
+    elif stock_code_str.startswith('8'):
+        return f"https://quote.eastmoney.com/{stock_code_str}.html"
+    else:
+        return f"https://quote.eastmoney.com/{stock_code_str}.html"
+
+
 def get_yesterday_limit_up_pool():
     """获取昨日涨停股池数据"""
     try:
@@ -1064,11 +1081,12 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
         for _, row in today_pool.iterrows():
             change_class = 'positive' if row['涨跌幅'] > 0 else 'negative'
             limit_up_reason = row.get('涨停原因', '未知')
+            stock_url = get_stock_url(row['代码'])
             html += f"""
                         <tr>
                             <td>{int(row['序号'])}</td>
                             <td>{row['代码']}</td>
-                            <td>{row['名称']}</td>
+                            <td><a href="{stock_url}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">{row['名称']}</a></td>
                             <td class="{change_class}">{row['涨跌幅']:.2f}</td>
                             <td>{row['最新价']:.2f}</td>
                             <td>{row['成交额']/100000000:.2f}</td>

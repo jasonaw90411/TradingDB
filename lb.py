@@ -171,8 +171,43 @@ def get_yesterday_limit_up_pool():
 def get_board_concept_info():
     """获取概念板块信息数据"""
     try:
+        import time
         df = ak.stock_board_concept_name_em()
         print(f"成功获取概念板块信息数据，共 {len(df)} 个板块")
+        
+        if not df.empty:
+            print("\n正在获取概念板块主力净流入率（仅前35名）...")
+            main_flow_rates = []
+            
+            for idx, row in df.iterrows():
+                try:
+                    board_name = row.get('板块名称', '')
+                    
+                    if idx < 35:
+                        if board_name:
+                            fund_flow_df = ak.stock_concept_fund_flow_hist(symbol=board_name)
+                            if not fund_flow_df.empty:
+                                latest_data = fund_flow_df.iloc[0]
+                                main_flow_rate = latest_data.get('主力净流入-净占比', 0)
+                                main_flow_rates.append(main_flow_rate)
+                                print(f"  {idx+1}. {board_name}: {main_flow_rate:.2f}%")
+                            else:
+                                main_flow_rates.append(0)
+                        else:
+                            main_flow_rates.append(0)
+                        
+                        if idx < 34:
+                            time.sleep(0.5)
+                    else:
+                        main_flow_rates.append(0)
+                        
+                except Exception as e:
+                    print(f"获取板块 {board_name} 主力净流入率失败: {e}")
+                    main_flow_rates.append(0)
+            
+            df['主力净流入率'] = main_flow_rates
+            print(f"概念板块主力净流入率获取完成")
+        
         return df
     except Exception as e:
         print(f"获取概念板块信息失败: {e}")
@@ -1553,6 +1588,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                                     <th>上涨家数</th>
                                     <th>下跌家数</th>
                                     <th>领涨股票</th>
+                                    <th>主力净流入率(%)</th>
                                     <th>领涨股票-涨跌幅(%)</th>
                                 </tr>
     """
@@ -1560,6 +1596,8 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
     if not board_info.empty:
         for _, row in board_info.iterrows():
             change_class = 'positive' if row['涨跌幅'] > 0 else 'negative'
+            main_flow_rate = row.get('主力净流入率', 0)
+            main_flow_class = 'positive' if main_flow_rate > 0 else 'negative'
             html += f"""
                                 <tr>
                                     <td>{int(row['排名'])}</td>
@@ -1572,13 +1610,14 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                                     <td>{int(row['上涨家数'])}</td>
                                     <td>{int(row['下跌家数'])}</td>
                                     <td>{row['领涨股票']}</td>
+                                    <td class="{main_flow_class}">{main_flow_rate:.2f}</td>
                                     <td class="{change_class}">{row['领涨股票-涨跌幅']:.2f}</td>
                                 </tr>
             """
     else:
         html += """
                                 <tr>
-                                    <td colspan="11" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
+                                    <td colspan="12" style="text-align: center; padding: 20px; color: #999;">暂无数据</td>
                                 </tr>
         """
     

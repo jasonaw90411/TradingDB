@@ -391,7 +391,7 @@ def get_yyb_lhb_data(yyb_code="210204000015668"):
 
 
 
-def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data=None, industry_flow_data=None, yyb_lhb_data=None, cls_news=None, ths_news=None):
+def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data=None, industry_flow_data=None, yz_lhb_data=None, cls_news=None, ths_news=None):
     # 获取股票市场活跃度数据
     try:
         market_activity = ak.stock_market_activity_legu()
@@ -943,8 +943,8 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     navItems[1].classList.remove('active');
                     navItems[2].classList.remove('active');
                     navItems[3].classList.add('active');
-                    headerTitle.textContent = '👤 陈小群追踪';
-                    headerSubtitle.textContent = '知名游资陈小群龙虎榜追踪';
+                    headerTitle.textContent = '👤 游资追踪';
+                    headerSubtitle.textContent = '知名游资龙虎榜追踪';
                 }}
             }}
             
@@ -977,6 +977,21 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 document.body.appendChild(downloadLink);
                 downloadLink.click();
                 document.body.removeChild(downloadLink);
+            }}
+            
+            function changeYz() {{
+                const select = document.getElementById('yz-select');
+                const selectedYz = select.value;
+                
+                const allTbodies = document.querySelectorAll('#yz-table tbody');
+                allTbodies.forEach(tbody => {{
+                    tbody.style.display = 'none';
+                }});
+                
+                const selectedTbody = document.getElementById('yz-data-' + selectedYz);
+                if (selectedTbody) {{
+                    selectedTbody.style.display = 'table-row-group';
+                }}
             }}
             
             function refreshCurrentPage() {{
@@ -2081,37 +2096,66 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             </div>
             <div id="chen-xiaoqun-page" class="page-content" style="display: none;">
             <div class="section">
-                <h2>👤 陈小群龙虎榜追踪</h2>
-                <div class="table-container">
-                    <table>
-                        <tr>
-                            <th>序号</th>
-                            <th>股票代码</th>
-                            <th>股票名称</th>
-                            <th>交易日期</th>
-                            <th>涨跌幅(%)</th>
-                            <th>买入金额(万)</th>
-                            <th>卖出金额(万)</th>
-                            <th>净额(万)</th>
-                            <th>上榜原因</th>
-                        </tr>
-                        """
-    if not yyb_lhb_data.empty:
-        for _, row in yyb_lhb_data.iterrows():
-            change_class = 'positive' if row['涨跌幅'] > 0 else 'negative'
-            net_class = 'positive' if row['净额'] > 0 else 'negative'
+                <h2>👤 游资龙虎榜追踪</h2>
+                <div style="margin-bottom: 15px;">
+                    <select id="yz-select" onchange="changeYz()" style="padding: 8px 12px; font-size: 14px; border-radius: 5px; border: 1px solid #ddd; background: #fff; cursor: pointer;">
+    """
+    if yz_lhb_data:
+        for yz_name in yz_lhb_data.keys():
             html += f"""
-                        <tr>
-                            <td>{int(row['序号'])}</td>
-                            <td>{row['股票代码']}</td>
-                            <td>{row['股票名称']}</td>
-                            <td>{row['交易日期']}</td>
-                            <td class="{change_class}">{row['涨跌幅']:.2f}</td>
-                            <td>{row['买入金额']/10000:.2f}</td>
-                            <td>{row['卖出金额']/10000:.2f}</td>
-                            <td class="{net_class}">{row['净额']/10000:.2f}</td>
-                            <td>{row['上榜原因']}</td>
-                        </tr>
+                        <option value="{yz_name}">{yz_name}</option>
+            """
+    html += """
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table id="yz-table">
+                        <thead>
+                            <tr>
+                                <th>序号</th>
+                                <th>股票代码</th>
+                                <th>股票名称</th>
+                                <th>交易日期</th>
+                                <th>涨跌幅(%)</th>
+                                <th>买入金额(万)</th>
+                                <th>卖出金额(万)</th>
+                                <th>净额(万)</th>
+                                <th>上榜原因</th>
+                            </tr>
+                        </thead>
+                        """
+    if yz_lhb_data:
+        first_yz = list(yz_lhb_data.keys())[0]
+        for yz_name, yz_data in yz_lhb_data.items():
+            html += f"""
+                        <tbody id="yz-data-{yz_name}" style="display: {'table-row-group' if yz_name == first_yz else 'none'};">
+            """
+            if not yz_data.empty:
+                for _, row in yz_data.iterrows():
+                    change_class = 'positive' if row['涨跌幅'] > 0 else 'negative'
+                    net_class = 'positive' if row['净额'] > 0 else 'negative'
+                    stock_url = get_stock_url(row['股票代码'])
+                    html += f"""
+                            <tr>
+                                <td>{int(row['序号'])}</td>
+                                <td>{row['股票代码']}</td>
+                                <td><a href="{stock_url}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">{row['股票名称']}</a></td>
+                                <td>{row['交易日期']}</td>
+                                <td class="{change_class}">{row['涨跌幅']:.2f}</td>
+                                <td>{row['买入金额']/10000:.2f}</td>
+                                <td>{row['卖出金额']/10000:.2f}</td>
+                                <td class="{net_class}">{row['净额']/10000:.2f}</td>
+                                <td>{row['上榜原因']}</td>
+                            </tr>
+                    """
+            else:
+                html += """
+                            <tr>
+                                <td colspan="9" style="text-align: center; padding: 40px; color: #999;">暂无数据</td>
+                            </tr>
+                """
+            html += """
+                        </tbody>
             """
     else:
         html += """
@@ -2163,9 +2207,32 @@ if __name__ == "__main__":
     print("\n正在获取行业资金流向数据...")
     industry_flow_data = get_industry_flow_data()
     
-    # 获取营业部龙虎榜数据
-    print("\n正在获取营业部龙虎榜数据...")
-    yyb_lhb_data = get_yyb_lhb_data(yyb_code="10030463")
+    # 定义游资列表（游资名称: 营业部代码列表，支持多个ID）
+    yz_list = {
+        "陈小群": ["10030463"],
+        "章盟主": ["10000526029"],
+        "赵老哥": ["10023543"],
+        "炒股养家": ["10028416","10028419"],
+        "宁波桑田路": ["10456710"],
+        "逍闲派": ["10026729"]
+    }
+    
+    # 获取所有游资的龙虎榜数据
+    print("\n正在获取游资龙虎榜数据...")
+    yz_lhb_data = {}
+    for yz_name, yyb_codes in yz_list.items():
+        print(f"  正在获取 {yz_name} 的数据...")
+        all_data = []
+        for yyb_code in yyb_codes:
+            data = get_yyb_lhb_data(yyb_code=yyb_code)
+            if not data.empty:
+                all_data.append(data)
+        if all_data:
+            yz_lhb_data[yz_name] = pd.concat(all_data, ignore_index=True)
+            if '序号' in yz_lhb_data[yz_name].columns:
+                yz_lhb_data[yz_name] = yz_lhb_data[yz_name][yz_lhb_data[yz_name]['序号'] <= 40]
+        else:
+            yz_lhb_data[yz_name] = pd.DataFrame()
     
     # 获取财联社新闻数据
     print("\n正在获取财联社新闻数据...")
@@ -2198,7 +2265,7 @@ if __name__ == "__main__":
     print("正在生成HTML报告...")
     print("=" * 60)
     
-    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data, industry_flow_data, yyb_lhb_data, cls_news, ths_news)
+    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data, industry_flow_data, yz_lhb_data, cls_news, ths_news)
     
     # 保存HTML文件
     html_file_path = "limit_up_pool_report.html"

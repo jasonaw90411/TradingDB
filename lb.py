@@ -1363,8 +1363,9 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 
                 stocks_list = []
                 for _, row in group.iterrows():
+                    stock_url = get_stock_url(row['代码'])
                     stocks_list.append(f"""
-                        <div class="lianban-stock-item">
+                        <div class="lianban-stock-item" style="cursor: pointer; transition: all 0.3s ease;" onclick="window.open('{stock_url}', '_blank')">
                             <div class="stock-code">{row['代码']}</div>
                             <div class="stock-name">{row['名称']}</div>
                             <div class="stock-change {'positive' if row['涨跌幅'] > 0 else 'negative'}">{row['涨跌幅']:.2f}%</div>

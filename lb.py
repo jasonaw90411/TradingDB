@@ -98,7 +98,7 @@ def analyze_limit_up_detailed(stock_name, stock_code, zt_pool_data=None):
                 ]
             },
             "parameters": {
-                "max_tokens": 50,
+                "max_tokens": 60,
                 "temperature": 0,
                 "top_p": 0.9
             }
@@ -389,9 +389,20 @@ def get_yyb_lhb_data(yyb_code="210204000015668"):
         print(f"获取营业部龙虎榜数据失败: {e}")
         return pd.DataFrame()
 
+def get_hot_search_data():
+    """获取百度热搜股票数据"""
+    try:
+        today_str = datetime.now().strftime('%Y%m%d')
+        hot_df = ak.stock_hot_search_baidu(symbol="A股", date=today_str, time="今日")
+        print(f"成功获取百度热搜股票数据，共 {len(hot_df)} 条记录")
+        return hot_df
+    except Exception as e:
+        print(f"获取百度热搜股票数据失败: {e}")
+        return pd.DataFrame()
 
 
-def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data=None, industry_flow_data=None, yz_lhb_data=None, cls_news=None, ths_news=None):
+
+def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data=None, industry_flow_data=None, yz_lhb_data=None, cls_news=None, ths_news=None, hot_search_data=None):
     # 获取股票市场活跃度数据
     try:
         market_activity = ak.stock_market_activity_legu()
@@ -895,6 +906,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 var boardInfoPage = document.getElementById('board-info-page');
                 var capitalFlowPage = document.getElementById('capital-flow-page');
                 var chenXiaoqunPage = document.getElementById('chen-xiaoqun-page');
+                var hotRankPage = document.getElementById('hot-rank-page');
                 var navItems = document.querySelectorAll('.nav-item');
                 var headerTitle = document.querySelector('h1');
                 var headerSubtitle = document.querySelector('.subtitle');
@@ -904,10 +916,12 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     boardInfoPage.style.display = 'none';
                     capitalFlowPage.style.display = 'none';
                     chenXiaoqunPage.style.display = 'none';
+                    hotRankPage.style.display = 'none';
                     navItems[0].classList.remove('active');
                     navItems[1].classList.remove('active');
-                    navItems[2].classList.add('active');
-                    navItems[3].classList.remove('active');
+                    navItems[2].classList.remove('active');
+                    navItems[3].classList.add('active');
+                    navItems[4].classList.remove('active');
                     headerTitle.textContent = '🚀 涨停股池数据';
                     headerSubtitle.textContent = '实时更新的涨停板行情数据';
                     initLimitUpCharts();
@@ -916,10 +930,12 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     boardInfoPage.style.display = 'block';
                     capitalFlowPage.style.display = 'none';
                     chenXiaoqunPage.style.display = 'none';
+                    hotRankPage.style.display = 'none';
                     navItems[0].classList.remove('active');
-                    navItems[1].classList.add('active');
-                    navItems[2].classList.remove('active');
+                    navItems[1].classList.remove('active');
+                    navItems[2].classList.add('active');
                     navItems[3].classList.remove('active');
+                    navItems[4].classList.remove('active');
                     headerTitle.textContent = '📊 概念板块信息';
                     headerSubtitle.textContent = '实时更新的概念板块行情数据';
                     initCharts();
@@ -928,10 +944,12 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     boardInfoPage.style.display = 'none';
                     capitalFlowPage.style.display = 'block';
                     chenXiaoqunPage.style.display = 'none';
-                    navItems[0].classList.add('active');
-                    navItems[1].classList.remove('active');
+                    hotRankPage.style.display = 'none';
+                    navItems[0].classList.remove('active');
+                    navItems[1].classList.add('active');
                     navItems[2].classList.remove('active');
                     navItems[3].classList.remove('active');
+                    navItems[4].classList.remove('active');
                     headerTitle.textContent = '💰 资金流向数据';
                     headerSubtitle.textContent = '实时更新的资金流向统计数据';
                 }} else if (pageId === 'chen-xiaoqun') {{
@@ -939,12 +957,27 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     boardInfoPage.style.display = 'none';
                     capitalFlowPage.style.display = 'none';
                     chenXiaoqunPage.style.display = 'block';
+                    hotRankPage.style.display = 'none';
                     navItems[0].classList.remove('active');
                     navItems[1].classList.remove('active');
                     navItems[2].classList.remove('active');
-                    navItems[3].classList.add('active');
+                    navItems[3].classList.remove('active');
+                    navItems[4].classList.add('active');
                     headerTitle.textContent = '👤 游资追踪';
                     headerSubtitle.textContent = '知名游资龙虎榜追踪';
+                }} else if (pageId === 'hot-rank') {{
+                    limitUpPage.style.display = 'none';
+                    boardInfoPage.style.display = 'none';
+                    capitalFlowPage.style.display = 'none';
+                    chenXiaoqunPage.style.display = 'none';
+                    hotRankPage.style.display = 'block';
+                    navItems[0].classList.add('active');
+                    navItems[1].classList.remove('active');
+                    navItems[2].classList.remove('active');
+                    navItems[3].classList.remove('active');
+                    navItems[4].classList.remove('active');
+                    headerTitle.textContent = '🔥 市场焦点';
+                    headerSubtitle.textContent = '实时更新的热点人气排行榜';
                 }}
             }}
             
@@ -1255,6 +1288,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
         <div class="sidebar">
             <div class="sidebar-title">📊 复盘助手</div>
             <div class="nav-menu">
+                <div class="nav-item" onclick="showPage('hot-rank')">🔥 市场焦点</div>
                 <div class="nav-item" onclick="showPage('capital-flow')">💰 资金流向</div>
                 <div class="nav-item" onclick="showPage('board-info')">📊 板块信息</div>
                 <div class="nav-item active" onclick="showPage('limit-up')">📈 涨停股池数据</div>
@@ -1396,6 +1430,106 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                         </tr>
         """
     
+    html += """
+                    </table>
+                </div>
+            </div>
+            </div>
+            <div id="hot-rank-page" class="page-content" style="display: none;">
+            <div class="section">
+                <h2>🔥 百度热搜股票</h2>
+                <div class="table-container">
+                    <table>
+                        <tr>
+                            <th>排名</th>
+                            <th>股票代码</th>
+                            <th>股票名称</th>
+                            <th>涨跌幅(%)</th>
+                            <th>综合热度</th>
+                        </tr>
+                        """
+    if hot_search_data is not None and not hot_search_data.empty:
+        for idx, row in hot_search_data.iterrows():
+            name_code = row.get('名称/代码', '')
+            change_pct = row.get('涨跌幅', '0%')
+            hot_value = row.get('综合热度', 0)
+            
+            stock_code = ''
+            stock_name = ''
+            if '(' in name_code and ')' in name_code:
+                stock_name = name_code.split('(')[0].strip()
+                stock_code = name_code.split('(')[1].split(')')[0].strip()
+            else:
+                stock_name = name_code
+            
+            if isinstance(change_pct, str):
+                change_value = float(change_pct.replace('%', '').replace('+', ''))
+            else:
+                change_value = float(change_pct) if pd.notna(change_pct) else 0
+            change_class = 'positive' if change_value > 0 else 'negative'
+            
+            stock_url = get_stock_url(stock_code) if stock_code else '#'
+            html += f"""
+                        <tr>
+                            <td>{idx + 1}</td>
+                            <td>{stock_code}</td>
+                            <td><a href="{stock_url}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">{stock_name}</a></td>
+                            <td class="{change_class}">{change_pct}</td>
+                            <td>{hot_value:,}</td>
+                        </tr>
+            """
+    else:
+        html += """
+                        <tr>
+                            <td colspan="5" style="text-align: center; padding: 40px; color: #999;">暂无数据</td>
+                        </tr>
+        """
+    html += """
+                    </table>
+                </div>
+            </div>
+            <div class="section">
+                <h2>📈 换手率排行榜</h2>
+                <div class="table-container">
+                    <table>
+                        <tr>
+                            <th>排名</th>
+                            <th>股票代码</th>
+                            <th>股票名称</th>
+                            <th>最新价</th>
+                            <th>涨跌幅(%)</th>
+                            <th>成交量</th>
+                            <th>成交额(万)</th>
+                            <th>换手率(%)</th>
+                        </tr>
+                        """
+    if not today_pool.empty:
+        sorted_pool = today_pool.sort_values(by='换手率', ascending=False).head(50)
+        for idx, row in sorted_pool.iterrows():
+            change_class = 'positive' if row['涨跌幅'] > 0 else 'negative'
+            stock_url = get_stock_url(row['代码'])
+            volume = row.get('成交量', 0)
+            amount = row.get('成交额', 0)
+            volume_display = f'{volume:.0f}' if volume else '-'
+            amount_display = f'{amount/10000:.2f}' if amount else '-'
+            html += f"""
+                        <tr>
+                            <td>{idx + 1}</td>
+                            <td>{row['代码']}</td>
+                            <td><a href="{stock_url}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">{row['名称']}</a></td>
+                            <td>{row['最新价']:.2f}</td>
+                            <td class="{change_class}">{row['涨跌幅']:.2f}</td>
+                            <td>{volume_display}</td>
+                            <td>{amount_display}</td>
+                            <td>{row['换手率']:.2f}</td>
+                        </tr>
+            """
+    else:
+        html += """
+                        <tr>
+                            <td colspan="8" style="text-align: center; padding: 40px; color: #999;">暂无数据</td>
+                        </tr>
+        """
     html += """
                     </table>
                 </div>
@@ -2242,6 +2376,10 @@ if __name__ == "__main__":
     print("\n正在获取同花顺新闻数据...")
     ths_news = get_ths_news()
     
+    # 获取百度热搜股票数据
+    print("\n正在获取百度热搜股票数据...")
+    hot_search_data = get_hot_search_data()
+    
     # 显示今天涨停股池数据
     if not today_pool.empty:
         print("\n" + "=" * 60)
@@ -2265,7 +2403,7 @@ if __name__ == "__main__":
     print("正在生成HTML报告...")
     print("=" * 60)
     
-    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data, industry_flow_data, yz_lhb_data, cls_news, ths_news)
+    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data, industry_flow_data, yz_lhb_data, cls_news, ths_news, hot_search_data)
     
     # 保存HTML文件
     html_file_path = "limit_up_pool_report.html"

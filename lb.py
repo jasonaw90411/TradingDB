@@ -190,12 +190,20 @@ def analyze_limit_up_statistics(today_pool):
     if today_pool.empty:
         return {
             'industry_stats': {},
+            'industry_stocks': {},
             'concept_stats': {},
             'board_stats': {'首版': 0, '二板': 0, '三板及以上': 0}
         }
     
     # 行业统计
     industry_stats = today_pool['所属行业'].value_counts().to_dict()
+    
+    # 行业股票列表
+    industry_stocks = {}
+    for industry in today_pool['所属行业'].unique():
+        stocks_in_industry = today_pool[today_pool['所属行业'] == industry][['名称', '代码']]
+        stock_list = [f"{row['名称']}({row['代码']})" for _, row in stocks_in_industry.iterrows()]
+        industry_stocks[industry] = stock_list
     
     # 概念统计（从涨停原因中提取）
     concept_stats = {}
@@ -215,6 +223,7 @@ def analyze_limit_up_statistics(today_pool):
     
     return {
         'industry_stats': industry_stats,
+        'industry_stocks': industry_stocks,
         'concept_stats': concept_stats,
         'board_stats': board_stats
     }
@@ -1125,6 +1134,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             
             function initLimitUpCharts() {{
                 const industryData = {json.dumps(analyze_limit_up_statistics(today_pool)['industry_stats'], ensure_ascii=False)};
+                const industryStocks = {json.dumps(analyze_limit_up_statistics(today_pool)['industry_stocks'], ensure_ascii=False)};
                 const boardData = {json.dumps(analyze_limit_up_statistics(today_pool)['board_stats'], ensure_ascii=False)};
                 
                 // 行业分布饼图
@@ -1161,7 +1171,10 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                                         label: function(context) {{
                                             const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                             const percentage = ((context.raw / total) * 100).toFixed(1);
-                                            return context.label + ': ' + context.raw + '只 (' + percentage + '%)';
+                                            const industryName = context.label;
+                                            const stocks = industryStocks[industryName] || [];
+                                            let stockText = stocks.length > 0 ? '\\n股票: ' + stocks.join(', ') : '';
+                                            return context.label + ': ' + context.raw + '只 (' + percentage + '%)' + stockText;
                                         }}
                                     }}
                                 }}

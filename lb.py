@@ -393,16 +393,50 @@ def get_hot_search_data():
     """获取百度热搜股票数据"""
     try:
         today_str = datetime.now().strftime('%Y%m%d')
-        hot_df = ak.stock_hot_search_baidu(symbol="A股", date=today_str, time="今日")
-        print(f"成功获取百度热搜股票数据，共 {len(hot_df)} 条记录")
-        return hot_df
+        print(f"尝试获取百度热搜股票数据，日期: {today_str}")
+        
+        try:
+            hot_today_df = ak.stock_hot_search_baidu(symbol="A股", date=today_str, time="今日")
+            print(f"成功获取百度热搜股票数据（今日），共 {len(hot_today_df)} 条记录")
+            if not hot_today_df.empty:
+                print(f"今日热搜数据列名: {hot_today_df.columns.tolist()}")
+        except Exception as e:
+            print(f"获取今日热搜数据失败: {e}")
+            hot_today_df = pd.DataFrame()
+        
+        try:
+            hot_hour_df = ak.stock_hot_search_baidu(symbol="A股", date=today_str, time="1小时")
+            print(f"成功获取百度热搜股票数据（1小时），共 {len(hot_hour_df)} 条记录")
+            if not hot_hour_df.empty:
+                print(f"1小时热搜数据列名: {hot_hour_df.columns.tolist()}")
+        except Exception as e:
+            print(f"获取1小时热搜数据失败: {e}")
+            hot_hour_df = pd.DataFrame()
+        
+        return {"今日": hot_today_df, "1小时": hot_hour_df}
     except Exception as e:
         print(f"获取百度热搜股票数据失败: {e}")
+        import traceback
+        traceback.print_exc()
+        return {"今日": pd.DataFrame(), "1小时": pd.DataFrame()}
+
+def get_hot_rank_em():
+    """获取东方财富热度榜数据"""
+    try:
+        hot_rank_df = ak.stock_hot_rank_em()
+        print(f"成功获取东方财富热度榜数据，共 {len(hot_rank_df)} 条记录")
+        return hot_rank_df
+    except Exception as e:
+        print(f"获取东方财富热度榜数据失败: {e}")
+        import traceback
+        traceback.print_exc()
         return pd.DataFrame()
 
 
 
-def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data=None, industry_flow_data=None, yz_lhb_data=None, cls_news=None, ths_news=None, hot_search_data=None):
+
+
+def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data=None, industry_flow_data=None, yz_lhb_data=None, cls_news=None, ths_news=None, hot_search_data=None, hot_rank_data=None):
     # 获取股票市场活跃度数据
     try:
         market_activity = ak.stock_market_activity_legu()
@@ -976,7 +1010,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     navItems[2].classList.remove('active');
                     navItems[3].classList.remove('active');
                     navItems[4].classList.remove('active');
-                    headerTitle.textContent = '🔥 市场焦点';
+                    headerTitle.textContent = '🔥 市场热点股票';
                     headerSubtitle.textContent = '实时更新的热点人气排行榜';
                 }}
             }}
@@ -1288,7 +1322,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
         <div class="sidebar">
             <div class="sidebar-title">📊 复盘助手</div>
             <div class="nav-menu">
-                <div class="nav-item" onclick="showPage('hot-rank')">🔥 市场焦点</div>
+                <div class="nav-item" onclick="showPage('hot-rank')">🔥 市场热点股票</div>
                 <div class="nav-item" onclick="showPage('capital-flow')">💰 资金流向</div>
                 <div class="nav-item" onclick="showPage('board-info')">📊 板块信息</div>
                 <div class="nav-item active" onclick="showPage('limit-up')">📈 涨停股池数据</div>
@@ -1436,20 +1470,20 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             </div>
             </div>
             <div id="hot-rank-page" class="page-content" style="display: none;">
-            <div class="section">
-                <h2>🔥 百度热搜股票</h2>
-                <div class="table-container">
-                    <table>
-                        <tr>
-                            <th>排名</th>
-                            <th>股票代码</th>
-                            <th>股票名称</th>
-                            <th>涨跌幅(%)</th>
-                            <th>综合热度</th>
-                        </tr>
-                        """
-    if hot_search_data is not None and not hot_search_data.empty:
-        for idx, row in hot_search_data.iterrows():
+            <div style="display: flex; gap: 20px; width: 100%;">
+                <div class="section" style="flex: 1; min-width: 0;">
+                    <h2>🔥 百度热搜股票 - 今日</h2>
+                    <div class="table-container">
+                        <table>
+                            <tr>
+                                <th>排名</th>
+                                <th>股票名称</th>
+                                <th>涨跌幅(%)</th>
+                                <th>综合热度</th>
+                            </tr>
+                            """
+    if hot_search_data and "今日" in hot_search_data and not hot_search_data["今日"].empty:
+        for idx, row in hot_search_data["今日"].iterrows():
             name_code = row.get('名称/代码', '')
             change_pct = row.get('涨跌幅', '0%')
             hot_value = row.get('综合热度', 0)
@@ -1470,68 +1504,115 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             
             stock_url = get_stock_url(stock_code) if stock_code else '#'
             html += f"""
-                        <tr>
-                            <td>{idx + 1}</td>
-                            <td>{stock_code}</td>
-                            <td><a href="{stock_url}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">{stock_name}</a></td>
-                            <td class="{change_class}">{change_pct}</td>
-                            <td>{hot_value:,}</td>
-                        </tr>
-            """
+                                <tr>
+                                    <td>{idx + 1}</td>
+                                    <td><a href="{stock_url}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">{stock_name}</a></td>
+                                    <td class="{change_class}">{change_pct}</td>
+                                    <td>{hot_value:,}</td>
+                                </tr>
+                """
     else:
         html += """
-                        <tr>
-                            <td colspan="5" style="text-align: center; padding: 40px; color: #999;">暂无数据</td>
-                        </tr>
-        """
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 40px; color: #999;">暂无数据</td>
+                                </tr>
+            """
     html += """
-                    </table>
+                        </table>
+                    </div>
                 </div>
-            </div>
-            <div class="section">
-                <h2>📈 换手率排行榜</h2>
-                <div class="table-container">
-                    <table>
-                        <tr>
-                            <th>排名</th>
-                            <th>股票代码</th>
-                            <th>股票名称</th>
-                            <th>最新价</th>
-                            <th>涨跌幅(%)</th>
-                            <th>成交量</th>
-                            <th>成交额(万)</th>
-                            <th>换手率(%)</th>
-                        </tr>
-                        """
-    if not today_pool.empty:
-        sorted_pool = today_pool.sort_values(by='换手率', ascending=False).head(50)
-        for idx, row in sorted_pool.iterrows():
-            change_class = 'positive' if row['涨跌幅'] > 0 else 'negative'
-            stock_url = get_stock_url(row['代码'])
-            volume = row.get('成交量', 0)
-            amount = row.get('成交额', 0)
-            volume_display = f'{volume:.0f}' if volume else '-'
-            amount_display = f'{amount/10000:.2f}' if amount else '-'
+                <div class="section" style="flex: 1; min-width: 0;">
+                    <h2>🔥 百度热搜股票 - 1小时</h2>
+                    <div class="table-container">
+                        <table>
+                            <tr>
+                                <th>排名</th>
+                                <th>股票名称</th>
+                                <th>涨跌幅(%)</th>
+                                <th>综合热度</th>
+                            </tr>
+                            """
+    if hot_search_data and "1小时" in hot_search_data and not hot_search_data["1小时"].empty:
+        for idx, row in hot_search_data["1小时"].iterrows():
+            name_code = row.get('名称/代码', '')
+            change_pct = row.get('涨跌幅', '0%')
+            hot_value = row.get('综合热度', 0)
+            
+            stock_code = ''
+            stock_name = ''
+            if '(' in name_code and ')' in name_code:
+                stock_name = name_code.split('(')[0].strip()
+                stock_code = name_code.split('(')[1].split(')')[0].strip()
+            else:
+                stock_name = name_code
+            
+            if isinstance(change_pct, str):
+                change_value = float(change_pct.replace('%', '').replace('+', ''))
+            else:
+                change_value = float(change_pct) if pd.notna(change_pct) else 0
+            change_class = 'positive' if change_value > 0 else 'negative'
+            
+            stock_url = get_stock_url(stock_code) if stock_code else '#'
             html += f"""
-                        <tr>
-                            <td>{idx + 1}</td>
-                            <td>{row['代码']}</td>
-                            <td><a href="{stock_url}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">{row['名称']}</a></td>
-                            <td>{row['最新价']:.2f}</td>
-                            <td class="{change_class}">{row['涨跌幅']:.2f}</td>
-                            <td>{volume_display}</td>
-                            <td>{amount_display}</td>
-                            <td>{row['换手率']:.2f}</td>
-                        </tr>
-            """
+                                <tr>
+                                    <td>{idx + 1}</td>
+                                    <td><a href="{stock_url}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">{stock_name}</a></td>
+                                    <td class="{change_class}">{change_pct}</td>
+                                    <td>{hot_value:,}</td>
+                                </tr>
+                """
     else:
         html += """
-                        <tr>
-                            <td colspan="8" style="text-align: center; padding: 40px; color: #999;">暂无数据</td>
-                        </tr>
-        """
+                                <tr>
+                                    <td colspan="4" style="text-align: center; padding: 40px; color: #999;">暂无数据</td>
+                                </tr>
+            """
     html += """
-                    </table>
+                        </table>
+                    </div>
+                </div>
+                <div class="section" style="flex: 1; min-width: 0;">
+                    <h2>📈 东方财富热度榜</h2>
+                    <div class="table-container">
+                        <table>
+                            <tr>
+                                <th>排名</th>
+                                <th>股票代码</th>
+                                <th>股票名称</th>
+                                <th>最新价</th>
+                                <th>涨跌额</th>
+                                <th>涨跌幅(%)</th>
+                            </tr>
+                            """
+    if hot_rank_data is not None and not hot_rank_data.empty:
+        for idx, row in hot_rank_data.iterrows():
+            stock_code = row.get('代码', '')
+            stock_name = row.get('股票名称', '')
+            latest_price = row.get('最新价', 0)
+            change_amount = row.get('涨跌额', 0)
+            change_pct = row.get('涨跌幅', 0)
+            
+            change_class = 'positive' if change_pct > 0 else 'negative'
+            stock_url = get_stock_url(stock_code) if stock_code else '#'
+            html += f"""
+                                <tr>
+                                    <td>{int(row.get('当前排名', idx + 1))}</td>
+                                    <td>{stock_code}</td>
+                                    <td><a href="{stock_url}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">{stock_name}</a></td>
+                                    <td>{latest_price:.2f}</td>
+                                    <td>{change_amount:.2f}</td>
+                                    <td class="{change_class}">{change_pct:.2f}</td>
+                                </tr>
+                """
+    else:
+        html += """
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 40px; color: #999;">暂无数据</td>
+                                </tr>
+            """
+    html += """
+                        </table>
+                    </div>
                 </div>
             </div>
             </div>
@@ -2380,6 +2461,10 @@ if __name__ == "__main__":
     print("\n正在获取百度热搜股票数据...")
     hot_search_data = get_hot_search_data()
     
+    # 获取东方财富热度榜数据
+    print("\n正在获取东方财富热度榜数据...")
+    hot_rank_data = get_hot_rank_em()
+    
     # 显示今天涨停股池数据
     if not today_pool.empty:
         print("\n" + "=" * 60)
@@ -2402,8 +2487,8 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print("正在生成HTML报告...")
     print("=" * 60)
-    
-    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data, industry_flow_data, yz_lhb_data, cls_news, ths_news, hot_search_data)
+ 
+    html_content = generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry_info, capital_flow_data, industry_flow_data, yz_lhb_data, cls_news, ths_news, hot_search_data, hot_rank_data)
     
     # 保存HTML文件
     html_file_path = "limit_up_pool_report.html"

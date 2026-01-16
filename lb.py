@@ -45,6 +45,83 @@ def get_ths_limit_up_analysis():
         return pd.DataFrame()
 
 
+def get_stock_concepts(stock_code):
+    """获取股票的概念板块信息"""
+    try:
+        df = ak.stock_board_concept_cons_em(symbol=stock_code)
+        if not df.empty:
+            concepts = df['板块名称'].tolist()
+            return concepts[:5]
+        return []
+    except Exception as e:
+        print(f"获取股票{stock_code}概念板块失败: {e}")
+        return []
+
+
+def analyze_limit_up_detailed(stock_name, stock_code, zt_pool_data=None):
+    """使用LLM详细分析涨停原因和概念"""
+    try:
+        if zt_pool_data is None or zt_pool_data.empty:
+            zt_pool_data = get_ths_limit_up_analysis()
+        
+        stock_info = ""
+        if not zt_pool_data.empty:
+            stock_row = zt_pool_data[(zt_pool_data['名称'] == stock_name) | (zt_pool_data['代码'] == stock_code)]
+            if not stock_row.empty:
+                stock_info = stock_row.iloc[0].to_dict()
+        
+        concepts = get_stock_concepts(stock_code)
+        concept_str = "、".join(concepts) if concepts else "未知"
+        
+        prompt = f"""请分析股票{stock_name}({stock_code})的涨停原因。
+
+        股票信息：{stock_info}
+        所属概念板块：{concept_str}
+
+        依据所属概念板块+同花顺涨停解读总结，要求：
+        1.仅输出涨停核心热点概念和原因，直接说结果不要有无任何多余文字描述
+        2.极致简洁,不超过30字,无标点,无废话"""
+
+        url = "https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation"
+        headers = {
+            "Authorization": f"Bearer {ALI_QIAN_WEN}",
+            "Content-Type": "application/json"
+        }
+        data = {
+            "model": "qwen-turbo",
+            "input": {
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": prompt
+                    }
+                ]
+            },
+            "parameters": {
+                "max_tokens": 50,
+                "temperature": 0,
+                "top_p": 0.9
+            }
+        }
+        
+        response = requests.post(url, headers=headers, json=data, timeout=30)
+        
+        if response.status_code == 200:
+            result = response.json()
+            reason = result['output']['text'].strip()
+            if len(reason) > 20:
+                reason = reason[:20]
+            print(f"股票{stock_name}涨停原因分析: {reason}")
+            return reason, concept_str
+        else:
+            print(f"LLM调用失败: {response.status_code} - {response.text}")
+            return "分析失败", concept_str
+            
+    except Exception as e:
+        print(f"LLM分析涨停原因失败: {e}")
+        return "分析失败", ""
+
+
 def analyze_limit_up_reason_with_llm(stock_name, stock_code, zt_pool_data=None):
     """使用阿里千文turbo模型分析涨停原因"""
     try:
@@ -106,6 +183,41 @@ def analyze_limit_up_reason_with_llm(stock_name, stock_code, zt_pool_data=None):
     except Exception as e:
         print(f"LLM分析涨停原因失败: {e}")
         return "分析失败"
+
+
+def analyze_limit_up_statistics(today_pool):
+    """分析涨停股池统计数据"""
+    if today_pool.empty:
+        return {
+            'industry_stats': {},
+            'concept_stats': {},
+            'board_stats': {'首版': 0, '二板': 0, '三板及以上': 0}
+        }
+    
+    # 行业统计
+    industry_stats = today_pool['所属行业'].value_counts().to_dict()
+    
+    # 概念统计（从涨停原因中提取）
+    concept_stats = {}
+    for reason in today_pool['涨停原因']:
+        if pd.notna(reason) and reason != '未知' and reason != '分析失败':
+            concept_stats[reason] = concept_stats.get(reason, 0) + 1
+    
+    # 连板统计
+    board_stats = {'首版': 0, '二板': 0, '三板及以上': 0}
+    for lianban in today_pool['连板数']:
+        if lianban == 1:
+            board_stats['首版'] += 1
+        elif lianban == 2:
+            board_stats['二板'] += 1
+        elif lianban >= 3:
+            board_stats['三板及以上'] += 1
+    
+    return {
+        'industry_stats': industry_stats,
+        'concept_stats': concept_stats,
+        'board_stats': board_stats
+    }
 
 
 def get_today_limit_up_pool():
@@ -789,6 +901,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     navItems[3].classList.remove('active');
                     headerTitle.textContent = '🚀 涨停股池数据';
                     headerSubtitle.textContent = '实时更新的涨停板行情数据';
+                    initLimitUpCharts();
                 }} else if (pageId === 'board-info') {{
                     limitUpPage.style.display = 'none';
                     boardInfoPage.style.display = 'block';
@@ -863,6 +976,9 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     const pageId = activeNavItem.onclick.toString().match(/'([^']+)'/)[1];
                     showPage(pageId);
                     updateRefreshTime();
+                    if (pageId === 'limit-up') {{
+                        initLimitUpCharts();
+                    }}
                 }}
             }}
             
@@ -885,6 +1001,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
             window.onload = function() {{
                 updateRefreshTime();
                 startAutoRefresh();
+                initLimitUpCharts();
             }}
             
             function startAutoRefresh() {{
@@ -1005,6 +1122,97 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     }}
                 }});
             }}
+            
+            function initLimitUpCharts() {{
+                const industryData = {json.dumps(analyze_limit_up_statistics(today_pool)['industry_stats'], ensure_ascii=False)};
+                const boardData = {json.dumps(analyze_limit_up_statistics(today_pool)['board_stats'], ensure_ascii=False)};
+                
+                // 行业分布饼图
+                const industryCtx = document.getElementById('industryChart');
+                if (industryCtx) {{
+                    const industryLabels = Object.keys(industryData).slice(0, 10);
+                    const industryValues = industryLabels.map(k => industryData[k]);
+                    const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12', '#9b59b6', '#1abc9c', '#e67e22', '#34495e', '#16a085', '#c0392b'];
+                    
+                    new Chart(industryCtx, {{
+                        type: 'pie',
+                        data: {{
+                            labels: industryLabels,
+                            datasets: [{{
+                                data: industryValues,
+                                backgroundColor: colors,
+                                borderWidth: 2,
+                                borderColor: '#fff'
+                            }}]
+                        }},
+                        options: {{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {{
+                                legend: {{
+                                    position: 'right',
+                                    labels: {{
+                                        font: {{ size: 11 }},
+                                        padding: 8
+                                    }}
+                                }},
+                                tooltip: {{
+                                    callbacks: {{
+                                        label: function(context) {{
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = ((context.raw / total) * 100).toFixed(1);
+                                            return context.label + ': ' + context.raw + '只 (' + percentage + '%)';
+                                        }}
+                                    }}
+                                }}
+                            }}
+                        }}
+                    }});
+                }}
+                
+                // 连板统计饼图
+                const boardCtx = document.getElementById('boardChart');
+                if (boardCtx) {{
+                    const boardLabels = Object.keys(boardData);
+                    const boardValues = boardLabels.map(k => boardData[k]);
+                    const boardColors = ['#2ecc71', '#f39c12', '#e74c3c'];
+                    
+                    new Chart(boardCtx, {{
+                        type: 'doughnut',
+                        data: {{
+                            labels: boardLabels,
+                            datasets: [{{
+                                data: boardValues,
+                                backgroundColor: boardColors,
+                                borderWidth: 3,
+                                borderColor: '#fff'
+                            }}]
+                        }},
+                        options: {{
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {{
+                                legend: {{
+                                    position: 'bottom',
+                                    labels: {{
+                                        font: {{ size: 14, weight: 'bold' }},
+                                        padding: 15
+                                    }}
+                                }},
+                                tooltip: {{
+                                    callbacks: {{
+                                        label: function(context) {{
+                                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                            const percentage = ((context.raw / total) * 100).toFixed(1);
+                                            return context.label + ': ' + context.raw + '只 (' + percentage + '%)';
+                                        }}
+                                    }}
+                                }}
+                            }}
+                        }}
+                    }});
+                }}
+            }}
         </script>
     </head>
     <body>
@@ -1089,6 +1297,23 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     <h2 style="margin-bottom: 0;">📈 今日涨停股池 - """ + today_str + """ <span style="font-size: 0.8em; color: #666;">(共 """ + str(len(today_pool)) + """ 只)</span></h2>
                     <button onclick="exportToCSV()" style="padding: 8px 16px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s ease;">📥 导出CSV</button>
                 </div>
+                
+                <div class="charts-section" style="display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap;">
+                    <div class="chart-card" style="flex: 1; min-width: 300px; background: #f8f9fa; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h3 style="text-align: center; color: #2c3e50; margin-bottom: 15px; font-size: 1.2rem;">📊 行业分布</h3>
+                        <div style="position: relative; height: 300px;">
+                            <canvas id="industryChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card" style="flex: 1; min-width: 300px; background: #f8f9fa; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <h3 style="text-align: center; color: #2c3e50; margin-bottom: 15px; font-size: 1.2rem;">📈 连板统计</h3>
+                        <div style="position: relative; height: 300px;">
+                            <canvas id="boardChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="table-container">
                     <table>
                         <tr>

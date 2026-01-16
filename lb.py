@@ -826,6 +826,37 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 }}
             }}
             
+            function exportToCSV() {{
+                const table = document.querySelector('#limit-up-page table');
+                if (!table) {{
+                    alert('未找到数据表');
+                    return;
+                }}
+                
+                let csv = [];
+                const rows = table.querySelectorAll('tr');
+                
+                for (let i = 0; i < rows.length; i++) {{
+                    const row = [], cols = rows[i].querySelectorAll('td, th');
+                    
+                    for (let j = 0; j < cols.length; j++) {{
+                        let text = cols[j].innerText.replace(/,/g, '，').replace(/\\n/g, ' ');
+                        row.push('"' + text + '"');
+                    }}
+                    
+                    csv.push(row.join(','));
+                }}
+                
+                const csvFile = new Blob([csv.join('\\n')], {{ type: 'text/csv;charset=utf-8;' }});
+                const downloadLink = document.createElement('a');
+                downloadLink.download = '涨停股池_' + new Date().toISOString().slice(0, 10) + '.csv';
+                downloadLink.href = window.URL.createObjectURL(csvFile);
+                downloadLink.style.display = 'none';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            }}
+            
             function refreshCurrentPage() {{
                 const activeNavItem = document.querySelector('.nav-item.active');
                 if (activeNavItem) {{
@@ -1054,7 +1085,10 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
     
     html += """
             <div class="section">
-                <h2>📈 今日涨停股池 - """ + today_str + """ <span style="font-size: 0.8em; color: #666;">(共 """ + str(len(today_pool)) + """ 只)</span></h2>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2 style="margin-bottom: 0;">📈 今日涨停股池 - """ + today_str + """ <span style="font-size: 0.8em; color: #666;">(共 """ + str(len(today_pool)) + """ 只)</span></h2>
+                    <button onclick="exportToCSV()" style="padding: 8px 16px; background: #27ae60; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.3s ease;">📥 导出CSV</button>
+                </div>
                 <div class="table-container">
                     <table>
                         <tr>

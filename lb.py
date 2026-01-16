@@ -1243,7 +1243,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 <div class="nav-item" onclick="showPage('capital-flow')">💰 资金流向</div>
                 <div class="nav-item" onclick="showPage('board-info')">📊 板块信息</div>
                 <div class="nav-item active" onclick="showPage('limit-up')">📈 涨停股池数据</div>
-                <div class="nav-item" onclick="showPage('chen-xiaoqun')">👤 陈小群追踪</div>
+                <div class="nav-item" onclick="showPage('chen-xiaoqun')">👤 游资追踪</div>
             </div>
         </div>
         <div class="main-content">

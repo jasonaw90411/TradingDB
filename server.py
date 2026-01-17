@@ -176,11 +176,24 @@ def api_hot_rank():
     if hot_search_data:
         if '今日' in hot_search_data and not hot_search_data['今日'].empty:
             for idx, row in hot_search_data['今日'].head(20).iterrows():
+                name_code = row.get('名称/代码', '')
+                change_pct = row.get('涨跌幅', '0%')
+                hot_value = row.get('综合热度', 0)
+                
+                stock_code = ''
+                stock_name = ''
+                if '(' in name_code and ')' in name_code:
+                    stock_name = name_code.split('(')[0].strip()
+                    stock_code = name_code.split('(')[1].split(')')[0].strip()
+                else:
+                    stock_name = name_code
+                
                 hot_search_items.append({
                     'rank': idx + 1,
-                    'code': str(row.get('代码', '')),
-                    'name': str(row.get('名称', '')),
-                    'heat': str(row.get('热度', ''))
+                    'code': stock_code,
+                    'name': stock_name,
+                    'change': change_pct,
+                    'heat': str(hot_value) if pd.notna(hot_value) else '0'
                 })
     
     # 处理东方财富热度榜数据

@@ -1128,36 +1128,41 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                 fetch('/api/hot-rank')
                     .then(response => response.json())
                     .then(data => {{
+                        // 更新百度热搜今日数据
                         if (data.hot_search && data.hot_search.length > 0) {{
-                            const hotSearchTable = document.querySelector('#hot-rank-page .table-container:nth-child(1) table tbody');
-                            if (hotSearchTable) {{
+                            const hotSearchTodayTable = document.getElementById('hot-search-today-tbody');
+                            if (hotSearchTodayTable) {{
                                 let html = '';
                                 data.hot_search.forEach(item => {{
+                                    const changeClass = item.change > 0 ? 'positive' : (item.change < 0 ? 'negative' : '');
+                                    const stockUrl = item.code ? `https://quote.eastmoney.com/${{item.code}}.html` : '#';
                                     html += `<tr>
                                         <td>${{item.rank}}</td>
-                                        <td><a href="https://quote.eastmoney.com/${{item.code}}.html" target="_blank">${{item.name}}</a></td>
-                                        <td>${{item.code}}</td>
+                                        <td><a href="${{stockUrl}}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">${{item.name}}</a></td>
+                                        <td class="${{changeClass}}">${{item.change}}</td>
                                         <td>${{item.heat}}</td>
                                     </tr>`;
                                 }});
-                                hotSearchTable.innerHTML = html;
-                                console.log('百度热搜更新成功，共', data.hot_search.length, '条');
+                                hotSearchTodayTable.innerHTML = html;
+                                console.log('百度热搜今日更新成功，共', data.hot_search.length, '条');
                             }}
                         }}
                         
+                        // 更新东方财富热度榜数据
                         if (data.hot_rank && data.hot_rank.length > 0) {{
-                            const hotRankTable = document.querySelector('#hot-rank-page .table-container:nth-child(2) table tbody');
+                            const hotRankTable = document.getElementById('hot-rank-tbody');
                             if (hotRankTable) {{
                                 let html = '';
                                 data.hot_rank.forEach(item => {{
                                     const changeClass = item.change > 0 ? 'positive' : (item.change < 0 ? 'negative' : '');
+                                    const stockUrl = item.code ? `https://quote.eastmoney.com/${{item.code}}.html` : '#';
                                     html += `<tr>
                                         <td>${{item.rank}}</td>
-                                        <td><a href="https://quote.eastmoney.com/${{item.code}}.html" target="_blank">${{item.name}}</a></td>
                                         <td>${{item.code}}</td>
+                                        <td><a href="${{stockUrl}}" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">${{item.name}}</a></td>
                                         <td>${{item.price.toFixed(2)}}</td>
+                                        <td>${{(item.price * item.change / 100).toFixed(2)}}</td>
                                         <td class="${{changeClass}}">${{item.change.toFixed(2)}}%</td>
-                                        <td>${{item.volume.toFixed(0)}}</td>
                                     </tr>`;
                                 }});
                                 hotRankTable.innerHTML = html;
@@ -1560,6 +1565,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                                 <th>涨跌幅(%)</th>
                                 <th>综合热度</th>
                             </tr>
+                            <tbody id="hot-search-today-tbody">
                             """
     if hot_search_data and "今日" in hot_search_data and not hot_search_data["今日"].empty:
         for idx, row in hot_search_data["今日"].iterrows():
@@ -1597,6 +1603,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                                 </tr>
             """
     html += """
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -1610,6 +1617,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                                 <th>涨跌幅(%)</th>
                                 <th>综合热度</th>
                             </tr>
+                            <tbody id="hot-search-hour-tbody">
                             """
     if hot_search_data and "1小时" in hot_search_data and not hot_search_data["1小时"].empty:
         for idx, row in hot_search_data["1小时"].iterrows():
@@ -1647,6 +1655,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                                 </tr>
             """
     html += """
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -1662,6 +1671,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                                 <th>涨跌额</th>
                                 <th>涨跌幅(%)</th>
                             </tr>
+                            <tbody id="hot-rank-tbody">
                             """
     if hot_rank_data is not None and not hot_rank_data.empty:
         for idx, row in hot_rank_data.iterrows():
@@ -1690,6 +1700,7 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                                 </tr>
             """
     html += """
+                            </tbody>
                         </table>
                     </div>
                 </div>

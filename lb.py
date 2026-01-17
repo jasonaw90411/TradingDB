@@ -1101,6 +1101,84 @@ def generate_limit_up_pool_html(today_pool, yesterday_pool, board_info, industry
                     location.reload();
                 }}, 15 * 60 * 1000);
             }}
+            
+            // 实时更新滚动新闻
+            function updateNewsScroll() {{
+                fetch('/api/news')
+                    .then(response => response.json())
+                    .then(data => {{
+                        const newsScroll = document.getElementById('newsScroll');
+                        if (newsScroll && data.news && data.news.length > 0) {{
+                            let newsHtml = '';
+                            data.news.forEach(news => {{
+                                newsHtml += `<span class='news-item'>${{news.icon}} [${{news.source}} ${{news.time}}] ${{news.title}}</span>`;
+                            }});
+                            // 重复新闻以实现无缝滚动
+                            newsScroll.innerHTML = newsHtml + newsHtml;
+                            console.log('新闻更新成功，共', data.news.length, '条');
+                        }}
+                    }})
+                    .catch(error => {{
+                        console.error('更新新闻失败:', error);
+                    }});
+            }}
+            
+            // 实时更新市场热点追踪
+            function updateHotRank() {{
+                fetch('/api/hot-rank')
+                    .then(response => response.json())
+                    .then(data => {{
+                        if (data.hot_search && data.hot_search.length > 0) {{
+                            const hotSearchTable = document.querySelector('#hot-rank-page .table-container:nth-child(1) table tbody');
+                            if (hotSearchTable) {{
+                                let html = '';
+                                data.hot_search.forEach(item => {{
+                                    html += `<tr>
+                                        <td>${{item.rank}}</td>
+                                        <td><a href="https://quote.eastmoney.com/${{item.code}}.html" target="_blank">${{item.name}}</a></td>
+                                        <td>${{item.code}}</td>
+                                        <td>${{item.heat}}</td>
+                                    </tr>`;
+                                }});
+                                hotSearchTable.innerHTML = html;
+                                console.log('百度热搜更新成功，共', data.hot_search.length, '条');
+                            }}
+                        }}
+                        
+                        if (data.hot_rank && data.hot_rank.length > 0) {{
+                            const hotRankTable = document.querySelector('#hot-rank-page .table-container:nth-child(2) table tbody');
+                            if (hotRankTable) {{
+                                let html = '';
+                                data.hot_rank.forEach(item => {{
+                                    const changeClass = item.change > 0 ? 'positive' : (item.change < 0 ? 'negative' : '');
+                                    html += `<tr>
+                                        <td>${{item.rank}}</td>
+                                        <td><a href="https://quote.eastmoney.com/${{item.code}}.html" target="_blank">${{item.name}}</a></td>
+                                        <td>${{item.code}}</td>
+                                        <td>${{item.price.toFixed(2)}}</td>
+                                        <td class="${{changeClass}}">${{item.change.toFixed(2)}}%</td>
+                                        <td>${{item.volume.toFixed(0)}}</td>
+                                    </tr>`;
+                                }});
+                                hotRankTable.innerHTML = html;
+                                console.log('东方财富热度榜更新成功，共', data.hot_rank.length, '条');
+                            }}
+                        }}
+                    }})
+                    .catch(error => {{
+                        console.error('更新市场热点失败:', error);
+                    }});
+            }}
+            
+            // 每5分钟更新一次新闻
+            setInterval(updateNewsScroll, 5 * 60 * 1000);
+            
+            // 每10分钟更新一次市场热点
+            setInterval(updateHotRank, 10 * 60 * 1000);
+            
+            // 页面加载完成后立即执行一次更新
+            setTimeout(updateNewsScroll, 1000);
+            setTimeout(updateHotRank, 2000);
 
             function initCharts() {{
             // 上涨下跌饼图

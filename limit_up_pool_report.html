@@ -595,6 +595,84 @@
                     location.reload();
                 }, 15 * 60 * 1000);
             }
+            
+            // 实时更新滚动新闻
+            function updateNewsScroll() {
+                fetch('/api/news')
+                    .then(response => response.json())
+                    .then(data => {
+                        const newsScroll = document.getElementById('newsScroll');
+                        if (newsScroll && data.news && data.news.length > 0) {
+                            let newsHtml = '';
+                            data.news.forEach(news => {
+                                newsHtml += `<span class='news-item'>${news.icon} [${news.source} ${news.time}] ${news.title}</span>`;
+                            });
+                            // 重复新闻以实现无缝滚动
+                            newsScroll.innerHTML = newsHtml + newsHtml;
+                            console.log('新闻更新成功，共', data.news.length, '条');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('更新新闻失败:', error);
+                    });
+            }
+            
+            // 实时更新市场热点追踪
+            function updateHotRank() {
+                fetch('/api/hot-rank')
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.hot_search && data.hot_search.length > 0) {
+                            const hotSearchTable = document.querySelector('#hot-rank-page .table-container:nth-child(1) table tbody');
+                            if (hotSearchTable) {
+                                let html = '';
+                                data.hot_search.forEach(item => {
+                                    html += `<tr>
+                                        <td>${item.rank}</td>
+                                        <td><a href="https://quote.eastmoney.com/${item.code}.html" target="_blank">${item.name}</a></td>
+                                        <td>${item.code}</td>
+                                        <td>${item.heat}</td>
+                                    </tr>`;
+                                });
+                                hotSearchTable.innerHTML = html;
+                                console.log('百度热搜更新成功，共', data.hot_search.length, '条');
+                            }
+                        }
+                        
+                        if (data.hot_rank && data.hot_rank.length > 0) {
+                            const hotRankTable = document.querySelector('#hot-rank-page .table-container:nth-child(2) table tbody');
+                            if (hotRankTable) {
+                                let html = '';
+                                data.hot_rank.forEach(item => {
+                                    const changeClass = item.change > 0 ? 'positive' : (item.change < 0 ? 'negative' : '');
+                                    html += `<tr>
+                                        <td>${item.rank}</td>
+                                        <td><a href="https://quote.eastmoney.com/${item.code}.html" target="_blank">${item.name}</a></td>
+                                        <td>${item.code}</td>
+                                        <td>${item.price.toFixed(2)}</td>
+                                        <td class="${changeClass}">${item.change.toFixed(2)}%</td>
+                                        <td>${item.volume.toFixed(0)}</td>
+                                    </tr>`;
+                                });
+                                hotRankTable.innerHTML = html;
+                                console.log('东方财富热度榜更新成功，共', data.hot_rank.length, '条');
+                            }
+                        }
+                    })
+                    .catch(error => {
+                        console.error('更新市场热点失败:', error);
+                    });
+            }
+            
+            // 每5分钟更新一次新闻
+            setInterval(updateNewsScroll, 5 * 60 * 1000);
+            
+            // 每10分钟更新一次市场热点
+            setInterval(updateHotRank, 10 * 60 * 1000);
+            
+            // 页面加载完成后立即执行一次更新
+            setTimeout(updateNewsScroll, 1000);
+            setTimeout(updateHotRank, 2000);
 
             function initCharts() {
             // 上涨下跌饼图
@@ -809,86 +887,86 @@
             <div class="news-label">📰 财经快讯</div>
             <div class="news-content">
                 <div class="news-scroll" id="newsScroll">
-                    <span class='news-item'>📰 [财联社 23:19:57] 伊朗媒体：约3000人因骚乱被捕</span>
-                    <span class='news-item'>📊 [财联社 23:21:18] </span>
-                    <span class='news-item'>💹 [财联社 23:26:30] </span>
-                    <span class='news-item'>📈 [财联社 23:29:30] 私人飞机热潮推动机库运营商 Sky Harbour进军市政债券市场</span>
-                    <span class='news-item'>💼 [财联社 23:29:42] 特朗普表示希望哈塞特留任后 美国两年期国债收益率上升</span>
-                    <span class='news-item'>🏢 [财联社 23:30:36] </span>
-                    <span class='news-item'>💡 [财联社 23:31:37] 王文涛与澳大利亚贸易部长法瑞尔、农业部长柯林斯通话</span>
-                    <span class='news-item'>⚡ [财联社 23:34:25] </span>
-                    <span class='news-item'>🔔 [财联社 23:36:38] </span>
-                    <span class='news-item'>📢 [财联社 23:38:00] 欧洲议会将对欧盟委员会发起不信任动议</span>
-                    <span class='news-item'>📰 [财联社 23:40:42] </span>
-                    <span class='news-item'>📊 [财联社 23:43:08] 特朗普称可能对不支持美获得格陵兰岛计划的国家加征关税</span>
-                    <span class='news-item'>💹 [财联社 23:47:55] </span>
-                    <span class='news-item'>📈 [财联社 23:52:46] 摩根士丹利上调美元兑日元汇率预期</span>
-                    <span class='news-item'>💼 [财联社 23:55:13] </span>
-                    <span class='news-item'>🏢 [财联社 00:00:53] </span>
-                    <span class='news-item'>💡 [财联社 00:01:59] </span>
-                    <span class='news-item'>⚡ [财联社 00:04:13] 最新研究为蛋白质稳态调控与疾病治疗开辟新路径</span>
-                    <span class='news-item'>🔔 [财联社 00:13:33] 日在野两党组建不左不右的中道政党</span>
-                    <span class='news-item'>📢 [财联社 00:18:18] 美国住宅建筑商信心指数五个月来首次下滑</span>
-                    <span class='news-item'>📰 [同花顺 2026-01-17 00:14:44] 伊朗外长：美国应选择外交而非战争</span>
-                    <span class='news-item'>📊 [同花顺 2026-01-17 00:12:13] 委内瑞拉代总统称捍卫主权是国家首要议程</span>
-                    <span class='news-item'>💹 [同花顺 2026-01-17 00:10:26] 日本民众：高市将日本推向战争</span>
-                    <span class='news-item'>📈 [同花顺 2026-01-17 00:09:43] 哥伦比亚与委内瑞拉边境秩序逐步恢复正常</span>
-                    <span class='news-item'>💼 [同花顺 2026-01-17 00:05:41] 中国科学家实现蛋白质精准降解与清除</span>
-                    <span class='news-item'>🏢 [同花顺 2026-01-16 23:57:15] 特朗普称可能对不支持美获得格陵兰岛计划的国家加征关税</span>
-                    <span class='news-item'>💡 [同花顺 2026-01-16 23:53:29] 摩根士丹利上调美元兑日元汇率预期</span>
-                    <span class='news-item'>⚡ [同花顺 2026-01-16 23:49:58] 欧洲议会将对欧盟委员会发起不信任动议</span>
-                    <span class='news-item'>🔔 [同花顺 2026-01-16 23:49:03] 离岸人民币兑美元跌破6.97</span>
-                    <span class='news-item'>📢 [同花顺 2026-01-16 23:41:42] LME伦铜跌幅扩大，现跌3%</span>
-                    <span class='news-item'>📰 [同花顺 2026-01-16 23:37:26] 美国总统特朗普称赞礼来公司</span>
-                    <span class='news-item'>📊 [同花顺 2026-01-16 23:34:42] 特朗普表示希望哈塞特留任后 美国两年期国债收益率上升</span>
-                    <span class='news-item'>💹 [同花顺 2026-01-16 23:34:00] 巴勒斯坦技术官僚委员会成员抵达埃及 为进入加沙做准备</span>
-                    <span class='news-item'>📈 [同花顺 2026-01-16 23:31:00] 纽约期金失守4570美元/盎司</span>
-                    <span class='news-item'>💼 [同花顺 2026-01-16 23:30:36] 王文涛部长与澳大利亚贸易部长法瑞尔、农业部长柯林斯通话</span>
-                    <span class='news-item'>🏢 [同花顺 2026-01-16 23:30:20] 现货黄金跌幅扩大至1%</span>
-                    <span class='news-item'>💡 [同花顺 2026-01-16 23:27:41] 美议员代表团出访丹麦，暗示美国会反对政府“收购”格陵兰岛</span>
-                    <span class='news-item'>⚡ [同花顺 2026-01-16 23:27:33] 乌政府调整宵禁政策 允许部分设施夜间营业</span>
-                    <span class='news-item'>🔔 [同花顺 2026-01-16 23:11:03] 马查多“献诺奖”，特朗普“笑纳”，颁奖方尴尬</span>
-                    <span class='news-item'>📢 [同花顺 2026-01-16 23:06:44] 京山轻机：公司因涉嫌信息披露违法违规被证监会立案</span>
-                    <span class='news-item'>📰 [财联社 23:19:57] 伊朗媒体：约3000人因骚乱被捕</span>
-                    <span class='news-item'>📊 [财联社 23:21:18] </span>
-                    <span class='news-item'>💹 [财联社 23:26:30] </span>
-                    <span class='news-item'>📈 [财联社 23:29:30] 私人飞机热潮推动机库运营商 Sky Harbour进军市政债券市场</span>
-                    <span class='news-item'>💼 [财联社 23:29:42] 特朗普表示希望哈塞特留任后 美国两年期国债收益率上升</span>
-                    <span class='news-item'>🏢 [财联社 23:30:36] </span>
-                    <span class='news-item'>💡 [财联社 23:31:37] 王文涛与澳大利亚贸易部长法瑞尔、农业部长柯林斯通话</span>
-                    <span class='news-item'>⚡ [财联社 23:34:25] </span>
-                    <span class='news-item'>🔔 [财联社 23:36:38] </span>
-                    <span class='news-item'>📢 [财联社 23:38:00] 欧洲议会将对欧盟委员会发起不信任动议</span>
-                    <span class='news-item'>📰 [财联社 23:40:42] </span>
-                    <span class='news-item'>📊 [财联社 23:43:08] 特朗普称可能对不支持美获得格陵兰岛计划的国家加征关税</span>
-                    <span class='news-item'>💹 [财联社 23:47:55] </span>
-                    <span class='news-item'>📈 [财联社 23:52:46] 摩根士丹利上调美元兑日元汇率预期</span>
-                    <span class='news-item'>💼 [财联社 23:55:13] </span>
-                    <span class='news-item'>🏢 [财联社 00:00:53] </span>
-                    <span class='news-item'>💡 [财联社 00:01:59] </span>
-                    <span class='news-item'>⚡ [财联社 00:04:13] 最新研究为蛋白质稳态调控与疾病治疗开辟新路径</span>
-                    <span class='news-item'>🔔 [财联社 00:13:33] 日在野两党组建不左不右的中道政党</span>
-                    <span class='news-item'>📢 [财联社 00:18:18] 美国住宅建筑商信心指数五个月来首次下滑</span>
-                    <span class='news-item'>📰 [同花顺 2026-01-17 00:14:44] 伊朗外长：美国应选择外交而非战争</span>
-                    <span class='news-item'>📊 [同花顺 2026-01-17 00:12:13] 委内瑞拉代总统称捍卫主权是国家首要议程</span>
-                    <span class='news-item'>💹 [同花顺 2026-01-17 00:10:26] 日本民众：高市将日本推向战争</span>
-                    <span class='news-item'>📈 [同花顺 2026-01-17 00:09:43] 哥伦比亚与委内瑞拉边境秩序逐步恢复正常</span>
-                    <span class='news-item'>💼 [同花顺 2026-01-17 00:05:41] 中国科学家实现蛋白质精准降解与清除</span>
-                    <span class='news-item'>🏢 [同花顺 2026-01-16 23:57:15] 特朗普称可能对不支持美获得格陵兰岛计划的国家加征关税</span>
-                    <span class='news-item'>💡 [同花顺 2026-01-16 23:53:29] 摩根士丹利上调美元兑日元汇率预期</span>
-                    <span class='news-item'>⚡ [同花顺 2026-01-16 23:49:58] 欧洲议会将对欧盟委员会发起不信任动议</span>
-                    <span class='news-item'>🔔 [同花顺 2026-01-16 23:49:03] 离岸人民币兑美元跌破6.97</span>
-                    <span class='news-item'>📢 [同花顺 2026-01-16 23:41:42] LME伦铜跌幅扩大，现跌3%</span>
-                    <span class='news-item'>📰 [同花顺 2026-01-16 23:37:26] 美国总统特朗普称赞礼来公司</span>
-                    <span class='news-item'>📊 [同花顺 2026-01-16 23:34:42] 特朗普表示希望哈塞特留任后 美国两年期国债收益率上升</span>
-                    <span class='news-item'>💹 [同花顺 2026-01-16 23:34:00] 巴勒斯坦技术官僚委员会成员抵达埃及 为进入加沙做准备</span>
-                    <span class='news-item'>📈 [同花顺 2026-01-16 23:31:00] 纽约期金失守4570美元/盎司</span>
-                    <span class='news-item'>💼 [同花顺 2026-01-16 23:30:36] 王文涛部长与澳大利亚贸易部长法瑞尔、农业部长柯林斯通话</span>
-                    <span class='news-item'>🏢 [同花顺 2026-01-16 23:30:20] 现货黄金跌幅扩大至1%</span>
-                    <span class='news-item'>💡 [同花顺 2026-01-16 23:27:41] 美议员代表团出访丹麦，暗示美国会反对政府“收购”格陵兰岛</span>
-                    <span class='news-item'>⚡ [同花顺 2026-01-16 23:27:33] 乌政府调整宵禁政策 允许部分设施夜间营业</span>
-                    <span class='news-item'>🔔 [同花顺 2026-01-16 23:11:03] 马查多“献诺奖”，特朗普“笑纳”，颁奖方尴尬</span>
-                    <span class='news-item'>📢 [同花顺 2026-01-16 23:06:44] 京山轻机：公司因涉嫌信息披露违法违规被证监会立案</span>
+                    <span class='news-item'>📰 [财联社 19:52:07] 伊朗网络服务恢复约1小时后再次中断</span>
+                    <span class='news-item'>📊 [财联社 19:55:32] </span>
+                    <span class='news-item'>💹 [财联社 20:04:56] 【电报解读】全固态电池迈向工程化验证关键期，业内一致预期2027年有望实现小批量生产，将对现有材料体系、装备体系产生颠覆，这家公司固态电池膜材料目前处于下游客户验证中</span>
+                    <span class='news-item'>📈 [财联社 20:09:40] 1月17日周六《新闻联播》要闻20条</span>
+                    <span class='news-item'>💼 [财联社 20:33:51] 土耳其总统府：特朗普邀请埃尔多安加入“加沙和平委员会”</span>
+                    <span class='news-item'>🏢 [财联社 20:41:30] 科技部部长阴和俊：将推动京津冀、沪苏浙皖优势互补，凝聚合力 打造科技强国重要战略支点</span>
+                    <span class='news-item'>💡 [财联社 20:46:39] 德石股份：超耐磨高压酸化压裂软管首获北美订单</span>
+                    <span class='news-item'>⚡ [财联社 20:51:14] 阿维塔通报“南宁15辆车连撞事故”：辅助驾驶功能未激活</span>
+                    <span class='news-item'>🔔 [财联社 21:08:35] 乌干达总统穆塞韦尼赢得连任</span>
+                    <span class='news-item'>📢 [财联社 21:22:45] 【电报解读】OpenAI拟在ChatGPT中测试定向广告加码营收增长计划！机构称GEO市场将随着大模型流量增长持续上行，2030年市场规模有望破千亿美元，GEO是这家公司与阿里在AI领域深度合作的延伸</span>
+                    <span class='news-item'>📰 [财联社 21:33:36] 西电团队攻克芯片散热世界难题：氮化镓射频芯片性能提升30%到40%</span>
+                    <span class='news-item'>📊 [财联社 21:45:57] 2026年春晚今日完成首次彩排 机器人将再度登上春晚舞台</span>
+                    <span class='news-item'>💹 [财联社 21:53:55] 美光科技拟以18亿美元收购力积电位于中国台湾的一处晶圆设施 以扩充其存储芯片产能</span>
+                    <span class='news-item'>📈 [财联社 21:55:01] 厄瓜多尔总统授权内政与国防部门启动紧急采购机制</span>
+                    <span class='news-item'>💼 [财联社 21:56:34] “太行三兄弟”完成评估验收 将带动我国燃气轮机行业发展</span>
+                    <span class='news-item'>🏢 [财联社 21:59:06] 丹麦官员：格陵兰岛不会出售</span>
+                    <span class='news-item'>💡 [财联社 22:02:48] 泽连斯基：乌克兰代表团已抵达美国</span>
+                    <span class='news-item'>⚡ [财联社 22:12:56] 海关总署副署长赵增连会见阿联酋驻华大使侯赛因·本·伊卜拉欣·哈马迪</span>
+                    <span class='news-item'>🔔 [财联社 22:16:15] 刷新历史！中国U23男足进入亚洲杯四强</span>
+                    <span class='news-item'>📢 [财联社 22:23:00] 伊朗短信发送功能已恢复 将逐步恢复互联网连接</span>
+                    <span class='news-item'>📰 [同花顺 2026-01-17 22:22:20] 伊朗短信发送功能已恢复 将逐步恢复互联网连接</span>
+                    <span class='news-item'>📊 [同花顺 2026-01-17 22:19:26] 中国U23男足刷新历史，挺进U23亚洲杯四强</span>
+                    <span class='news-item'>💹 [同花顺 2026-01-17 22:12:04] 海关总署副署长赵增连会见阿联酋驻华大使侯赛因·本·伊卜拉欣·哈马迪</span>
+                    <span class='news-item'>📈 [同花顺 2026-01-17 22:02:06] 泽连斯基：乌克兰代表团已抵达美国</span>
+                    <span class='news-item'>💼 [同花顺 2026-01-17 21:59:10] 丹麦官员：格陵兰岛不会出售</span>
+                    <span class='news-item'>🏢 [同花顺 2026-01-17 21:52:50] 厄瓜多尔总统授权内政与国防部门启动紧急采购机制</span>
+                    <span class='news-item'>💡 [同花顺 2026-01-17 21:45:39] 陕西科研团队攻克芯片散热世界难题</span>
+                    <span class='news-item'>⚡ [同花顺 2026-01-17 21:36:35] 内蒙古春坤山至武川500千伏输电线路投产送电</span>
+                    <span class='news-item'>🔔 [同花顺 2026-01-17 21:05:58] 乌干达总统穆塞韦尼赢得连任</span>
+                    <span class='news-item'>📢 [同花顺 2026-01-17 20:50:07] 科技部部长阴和俊：将推动京津冀、沪苏浙皖优势互补，凝聚合力，打造科技强国重要战略支点</span>
+                    <span class='news-item'>📰 [同花顺 2026-01-17 20:46:52] 阿维塔通报“南宁15辆车连撞事故”：辅助驾驶功能未激活</span>
+                    <span class='news-item'>📊 [同花顺 2026-01-17 20:29:26] 中国光伏行业告别退税依赖，技术与全球化成为新竞速</span>
+                    <span class='news-item'>💹 [同花顺 2026-01-17 20:09:17] 1月17日 周六《新闻联播》要闻13条</span>
+                    <span class='news-item'>📈 [同花顺 2026-01-17 20:05:53] 海南省政府与南方电网公司在粤签署“十五五”深化战略合作协议</span>
+                    <span class='news-item'>💼 [同花顺 2026-01-17 20:02:43] 马斯克在社交平台X上表示，AI5芯片设计已接近完成</span>
+                    <span class='news-item'>🏢 [同花顺 2026-01-17 20:01:49] 土耳其总统府：特朗普邀请埃尔多安加入“加沙和平委员会”</span>
+                    <span class='news-item'>💡 [同花顺 2026-01-17 20:00:07] 泽连斯基：乌克兰几乎所有地区都在进行能源抢修工作</span>
+                    <span class='news-item'>⚡ [同花顺 2026-01-17 19:46:29] 伊朗网络服务恢复约1小时后再次中断</span>
+                    <span class='news-item'>🔔 [同花顺 2026-01-17 19:41:18] 服务两岸经贸合作 顺丰航空“南京=台北”定班货运航线顺利启航</span>
+                    <span class='news-item'>📢 [同花顺 2026-01-17 19:41:09] 国投证券林荣雄：“降温”非“熄火”，减速才能走出“长牛”“慢牛”</span>
+                    <span class='news-item'>📰 [财联社 19:52:07] 伊朗网络服务恢复约1小时后再次中断</span>
+                    <span class='news-item'>📊 [财联社 19:55:32] </span>
+                    <span class='news-item'>💹 [财联社 20:04:56] 【电报解读】全固态电池迈向工程化验证关键期，业内一致预期2027年有望实现小批量生产，将对现有材料体系、装备体系产生颠覆，这家公司固态电池膜材料目前处于下游客户验证中</span>
+                    <span class='news-item'>📈 [财联社 20:09:40] 1月17日周六《新闻联播》要闻20条</span>
+                    <span class='news-item'>💼 [财联社 20:33:51] 土耳其总统府：特朗普邀请埃尔多安加入“加沙和平委员会”</span>
+                    <span class='news-item'>🏢 [财联社 20:41:30] 科技部部长阴和俊：将推动京津冀、沪苏浙皖优势互补，凝聚合力 打造科技强国重要战略支点</span>
+                    <span class='news-item'>💡 [财联社 20:46:39] 德石股份：超耐磨高压酸化压裂软管首获北美订单</span>
+                    <span class='news-item'>⚡ [财联社 20:51:14] 阿维塔通报“南宁15辆车连撞事故”：辅助驾驶功能未激活</span>
+                    <span class='news-item'>🔔 [财联社 21:08:35] 乌干达总统穆塞韦尼赢得连任</span>
+                    <span class='news-item'>📢 [财联社 21:22:45] 【电报解读】OpenAI拟在ChatGPT中测试定向广告加码营收增长计划！机构称GEO市场将随着大模型流量增长持续上行，2030年市场规模有望破千亿美元，GEO是这家公司与阿里在AI领域深度合作的延伸</span>
+                    <span class='news-item'>📰 [财联社 21:33:36] 西电团队攻克芯片散热世界难题：氮化镓射频芯片性能提升30%到40%</span>
+                    <span class='news-item'>📊 [财联社 21:45:57] 2026年春晚今日完成首次彩排 机器人将再度登上春晚舞台</span>
+                    <span class='news-item'>💹 [财联社 21:53:55] 美光科技拟以18亿美元收购力积电位于中国台湾的一处晶圆设施 以扩充其存储芯片产能</span>
+                    <span class='news-item'>📈 [财联社 21:55:01] 厄瓜多尔总统授权内政与国防部门启动紧急采购机制</span>
+                    <span class='news-item'>💼 [财联社 21:56:34] “太行三兄弟”完成评估验收 将带动我国燃气轮机行业发展</span>
+                    <span class='news-item'>🏢 [财联社 21:59:06] 丹麦官员：格陵兰岛不会出售</span>
+                    <span class='news-item'>💡 [财联社 22:02:48] 泽连斯基：乌克兰代表团已抵达美国</span>
+                    <span class='news-item'>⚡ [财联社 22:12:56] 海关总署副署长赵增连会见阿联酋驻华大使侯赛因·本·伊卜拉欣·哈马迪</span>
+                    <span class='news-item'>🔔 [财联社 22:16:15] 刷新历史！中国U23男足进入亚洲杯四强</span>
+                    <span class='news-item'>📢 [财联社 22:23:00] 伊朗短信发送功能已恢复 将逐步恢复互联网连接</span>
+                    <span class='news-item'>📰 [同花顺 2026-01-17 22:22:20] 伊朗短信发送功能已恢复 将逐步恢复互联网连接</span>
+                    <span class='news-item'>📊 [同花顺 2026-01-17 22:19:26] 中国U23男足刷新历史，挺进U23亚洲杯四强</span>
+                    <span class='news-item'>💹 [同花顺 2026-01-17 22:12:04] 海关总署副署长赵增连会见阿联酋驻华大使侯赛因·本·伊卜拉欣·哈马迪</span>
+                    <span class='news-item'>📈 [同花顺 2026-01-17 22:02:06] 泽连斯基：乌克兰代表团已抵达美国</span>
+                    <span class='news-item'>💼 [同花顺 2026-01-17 21:59:10] 丹麦官员：格陵兰岛不会出售</span>
+                    <span class='news-item'>🏢 [同花顺 2026-01-17 21:52:50] 厄瓜多尔总统授权内政与国防部门启动紧急采购机制</span>
+                    <span class='news-item'>💡 [同花顺 2026-01-17 21:45:39] 陕西科研团队攻克芯片散热世界难题</span>
+                    <span class='news-item'>⚡ [同花顺 2026-01-17 21:36:35] 内蒙古春坤山至武川500千伏输电线路投产送电</span>
+                    <span class='news-item'>🔔 [同花顺 2026-01-17 21:05:58] 乌干达总统穆塞韦尼赢得连任</span>
+                    <span class='news-item'>📢 [同花顺 2026-01-17 20:50:07] 科技部部长阴和俊：将推动京津冀、沪苏浙皖优势互补，凝聚合力，打造科技强国重要战略支点</span>
+                    <span class='news-item'>📰 [同花顺 2026-01-17 20:46:52] 阿维塔通报“南宁15辆车连撞事故”：辅助驾驶功能未激活</span>
+                    <span class='news-item'>📊 [同花顺 2026-01-17 20:29:26] 中国光伏行业告别退税依赖，技术与全球化成为新竞速</span>
+                    <span class='news-item'>💹 [同花顺 2026-01-17 20:09:17] 1月17日 周六《新闻联播》要闻13条</span>
+                    <span class='news-item'>📈 [同花顺 2026-01-17 20:05:53] 海南省政府与南方电网公司在粤签署“十五五”深化战略合作协议</span>
+                    <span class='news-item'>💼 [同花顺 2026-01-17 20:02:43] 马斯克在社交平台X上表示，AI5芯片设计已接近完成</span>
+                    <span class='news-item'>🏢 [同花顺 2026-01-17 20:01:49] 土耳其总统府：特朗普邀请埃尔多安加入“加沙和平委员会”</span>
+                    <span class='news-item'>💡 [同花顺 2026-01-17 20:00:07] 泽连斯基：乌克兰几乎所有地区都在进行能源抢修工作</span>
+                    <span class='news-item'>⚡ [同花顺 2026-01-17 19:46:29] 伊朗网络服务恢复约1小时后再次中断</span>
+                    <span class='news-item'>🔔 [同花顺 2026-01-17 19:41:18] 服务两岸经贸合作 顺丰航空“南京=台北”定班货运航线顺利启航</span>
+                    <span class='news-item'>📢 [同花顺 2026-01-17 19:41:09] 国投证券林荣雄：“降温”非“熄火”，减速才能走出“长牛”“慢牛”</span>
                 </div>
             </div>
         </div>
@@ -1155,7 +1233,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>电网设备</td>
-                            <td style="color: #e74c3c; font-weight: 500;">电网设备光伏概念业绩预增</td>
+                            <td style="color: #e74c3c; font-weight: 500;">电网设备光伏概念业绩预增涨停</td>
                         </tr>
             
                         <tr>
@@ -1212,7 +1290,7 @@
                             <td>3/3</td>
                             <td>3</td>
                             <td>商业百货</td>
-                            <td style="color: #e74c3c; font-weight: 500;">商业百货消费复苏新零售概念涨停</td>
+                            <td style="color: #e74c3c; font-weight: 500;">商业百货消费升级政策利好</td>
                         </tr>
             
                         <tr>
@@ -1231,7 +1309,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>橡胶制品</td>
-                            <td style="color: #e74c3c; font-weight: 500;">联科科技涨停核心热点概念和原因是：橡胶制</td>
+                            <td style="color: #e74c3c; font-weight: 500;">联科科技涨停核心热点概念为橡胶制品行业受</td>
                         </tr>
             
                         <tr>
@@ -1250,7 +1328,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>专用设备</td>
-                            <td style="color: #e74c3c; font-weight: 500;">利柏特涨停核心热点概念和原因是：专用设备</td>
+                            <td style="color: #e74c3c; font-weight: 500;">利柏特涨停核心热点概念是专用设备行业受益</td>
                         </tr>
             
                         <tr>
@@ -1269,7 +1347,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>消费电子</td>
-                            <td style="color: #e74c3c; font-weight: 500;">消费电子业绩预增新能源汽车零部件</td>
+                            <td style="color: #e74c3c; font-weight: 500;">消费电子业绩预增智能穿戴概念涨停</td>
                         </tr>
             
                         <tr>
@@ -1383,7 +1461,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>电网设备</td>
-                            <td style="color: #e74c3c; font-weight: 500;">新能源电力设备板块上涨带动个股涨停</td>
+                            <td style="color: #e74c3c; font-weight: 500;">新能源电力板块受益政策利好股价涨停</td>
                         </tr>
             
                         <tr>
@@ -1421,7 +1499,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>专业服务</td>
-                            <td style="color: #e74c3c; font-weight: 500;">智能电网新能源电力设备概念涨停</td>
+                            <td style="color: #e74c3c; font-weight: 500;">智能电网新能源电力设备涨停</td>
                         </tr>
             
                         <tr>
@@ -1440,7 +1518,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>装修装饰</td>
-                            <td style="color: #e74c3c; font-weight: 500;">装修装饰板块走强 名雕股份涨停</td>
+                            <td style="color: #e74c3c; font-weight: 500;">装修装饰板块走强名雕股份涨停</td>
                         </tr>
             
                         <tr>
@@ -1573,7 +1651,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>汽车零部</td>
-                            <td style="color: #e74c3c; font-weight: 500;">新能源汽车零部件特斯拉供应商汽车轻量化概</td>
+                            <td style="color: #e74c3c; font-weight: 500;">新能源汽车零部件特斯拉供应商汽车零部涨停</td>
                         </tr>
             
                         <tr>
@@ -1630,7 +1708,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>电机</td>
-                            <td style="color: #e74c3c; font-weight: 500;">新能源汽车电机概念涨停</td>
+                            <td style="color: #e74c3c; font-weight: 500;">新能源汽车电机概念涨停原因</td>
                         </tr>
             
                         <tr>
@@ -1649,7 +1727,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>通用设备</td>
-                            <td style="color: #e74c3c; font-weight: 500;">光伏概念业绩大增涨停原因</td>
+                            <td style="color: #e74c3c; font-weight: 500;">光伏概念业绩大增股价涨停</td>
                         </tr>
             
                         <tr>
@@ -1687,7 +1765,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>橡胶制品</td>
-                            <td style="color: #e74c3c; font-weight: 500;">海安集团涨停核心热点概念是橡胶制品行业受</td>
+                            <td style="color: #e74c3c; font-weight: 500;">海安集团涨停核心热点概念为橡胶制品行业受</td>
                         </tr>
             
                         <tr>
@@ -1706,7 +1784,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>房地产开</td>
-                            <td style="color: #e74c3c; font-weight: 500;">房地产开发政策利好刺激股价涨停</td>
+                            <td style="color: #e74c3c; font-weight: 500;">房地产开发 业绩预增</td>
                         </tr>
             
                         <tr>
@@ -1725,7 +1803,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>通用设备</td>
-                            <td style="color: #e74c3c; font-weight: 500;">新能源汽车轻量化 铝合金压铸业务增长</td>
+                            <td style="color: #e74c3c; font-weight: 500;">新能源汽车轻量化零部件业务增长显著</td>
                         </tr>
             
                         <tr>
@@ -1782,7 +1860,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>半导体</td>
-                            <td style="color: #e74c3c; font-weight: 500;">半导体碳化硅材料龙头业绩预增带动股价涨停</td>
+                            <td style="color: #e74c3c; font-weight: 500;">半导体碳化硅材料国产替代加速</td>
                         </tr>
             
                         <tr>
@@ -1801,7 +1879,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>互联网服</td>
-                            <td style="color: #e74c3c; font-weight: 500;">智能驾驶 数据要素 无人驾驶 业绩预增 </td>
+                            <td style="color: #e74c3c; font-weight: 500;">智能驾驶 数据安全 无人驾驶 业绩增长 </td>
                         </tr>
             
                         <tr>
@@ -1839,7 +1917,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>工程建设</td>
-                            <td style="color: #e74c3c; font-weight: 500;">工程建设板块走强柏诚股份涨停</td>
+                            <td style="color: #e74c3c; font-weight: 500;">工程建设板块带动股价涨停</td>
                         </tr>
             
                         <tr>
@@ -1877,7 +1955,7 @@
                             <td>3/2</td>
                             <td>1</td>
                             <td>通信设备</td>
-                            <td style="color: #e74c3c; font-weight: 500;">5G通信芯片国产替代概念涨停</td>
+                            <td style="color: #e74c3c; font-weight: 500;">5G通信芯片国产替代概念受资金追捧</td>
                         </tr>
             
                         <tr>
@@ -1953,7 +2031,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>光学光电</td>
-                            <td style="color: #e74c3c; font-weight: 500;">Mini LED概念受利好刺激股价涨停</td>
+                            <td style="color: #e74c3c; font-weight: 500;">Mini LED 芯片产能释放带动股价涨</td>
                         </tr>
             
                         <tr>
@@ -1991,7 +2069,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>半导体</td>
-                            <td style="color: #e74c3c; font-weight: 500;">半导体行业景气度提升公司业绩预增</td>
+                            <td style="color: #e74c3c; font-weight: 500;">半导体行业景气度提升公司业绩预增兆易创新</td>
                         </tr>
             
                         <tr>
@@ -2010,7 +2088,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>房地产开</td>
-                            <td style="color: #e74c3c; font-weight: 500;">房地产政策利好刺激资金涌入带动股价涨停</td>
+                            <td style="color: #e74c3c; font-weight: 500;">房地产政策利好刺激资金买入合肥城建涨停</td>
                         </tr>
             
                         <tr>
@@ -2048,7 +2126,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>多元金融</td>
-                            <td style="color: #e74c3c; font-weight: 500;">多元金融 业绩预增 预披露年报净利润增长</td>
+                            <td style="color: #e74c3c; font-weight: 500;">多元金融 业绩预增 高送转预期</td>
                         </tr>
             
                         <tr>
@@ -2105,7 +2183,7 @@
                             <td>1/1</td>
                             <td>1</td>
                             <td>半导体</td>
-                            <td style="color: #e74c3c; font-weight: 500;">半导体行业景气度回升 业绩预期改善</td>
+                            <td style="color: #e74c3c; font-weight: 500;">半导体行业回暖 业绩预期向好</td>
                         </tr>
             
                         <tr>
@@ -2145,89 +2223,9 @@
                             </tr>
                             
                                 <tr>
-                                    <td>1</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">京东方Ａ</a></td>
-                                    <td class="negative">-1.55%</td>
-                                    <td>362,762</td>
+                                    <td colspan="4" style="text-align: center; padding: 40px; color: #999;">暂无数据</td>
                                 </tr>
-                
-                                <tr>
-                                    <td>2</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">中国能建</a></td>
-                                    <td class="positive">+4.62%</td>
-                                    <td>324,458</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>3</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">包钢股份</a></td>
-                                    <td class="negative">-1.57%</td>
-                                    <td>313,472</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>4</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">永泰能源</a></td>
-                                    <td class="negative">-0.61%</td>
-                                    <td>218,219</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>5</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">TCL科技</a></td>
-                                    <td class="negative">-2.42%</td>
-                                    <td>180,802</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>6</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">中国电建</a></td>
-                                    <td class="positive">+7.84%</td>
-                                    <td>130,737</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>7</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">铜陵有色</a></td>
-                                    <td class="negative">-0.16%</td>
-                                    <td>111,450</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>8</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">山子高科</a></td>
-                                    <td class="negative">-0.98%</td>
-                                    <td>95,112</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>9</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">特变电工</a></td>
-                                    <td class="negative">-2.67%</td>
-                                    <td>50,524</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>10</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">盈新发展</a></td>
-                                    <td class="positive">+10.16%</td>
-                                    <td>46,703</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>11</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">美年健康</a></td>
-                                    <td class="negative">-9.99%</td>
-                                    <td>38,747</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>12</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">蓝色光标</a></td>
-                                    <td class="negative">-11.52%</td>
-                                    <td>34,795</td>
-                                </tr>
-                
+            
                         </table>
                     </div>
                 </div>
@@ -2243,89 +2241,9 @@
                             </tr>
                             
                                 <tr>
-                                    <td>1</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">京东方Ａ</a></td>
-                                    <td class="negative">-1.55%</td>
-                                    <td>362,762</td>
+                                    <td colspan="4" style="text-align: center; padding: 40px; color: #999;">暂无数据</td>
                                 </tr>
-                
-                                <tr>
-                                    <td>2</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">中国能建</a></td>
-                                    <td class="positive">+4.62%</td>
-                                    <td>324,458</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>3</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">包钢股份</a></td>
-                                    <td class="negative">-1.57%</td>
-                                    <td>313,472</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>4</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">永泰能源</a></td>
-                                    <td class="negative">-0.61%</td>
-                                    <td>218,219</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>5</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">TCL科技</a></td>
-                                    <td class="negative">-2.42%</td>
-                                    <td>180,802</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>6</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">中国电建</a></td>
-                                    <td class="positive">+7.84%</td>
-                                    <td>130,737</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>7</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">铜陵有色</a></td>
-                                    <td class="negative">-0.16%</td>
-                                    <td>111,450</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>8</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">山子高科</a></td>
-                                    <td class="negative">-0.98%</td>
-                                    <td>95,112</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>9</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">特变电工</a></td>
-                                    <td class="negative">-2.67%</td>
-                                    <td>50,524</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>10</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">盈新发展</a></td>
-                                    <td class="positive">+10.16%</td>
-                                    <td>46,703</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>11</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">美年健康</a></td>
-                                    <td class="negative">-9.99%</td>
-                                    <td>38,747</td>
-                                </tr>
-                
-                                <tr>
-                                    <td>12</td>
-                                    <td><a href="#" target="_blank" style="color: #3498db; text-decoration: none; font-weight: 500;">蓝色光标</a></td>
-                                    <td class="negative">-11.52%</td>
-                                    <td>34,795</td>
-                                </tr>
-                
+            
                         </table>
                     </div>
                 </div>

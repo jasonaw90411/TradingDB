@@ -11,7 +11,8 @@ if errorlevel 1 (
 )
 echo.
 echo Server started successfully!
-echo Please visit: http://localhost:5000
+echo Opening browser at http://127.0.0.1:5000
+start http://127.0.0.1:5000
 echo.
 echo Press Ctrl+C to stop the server
 echo ========================================

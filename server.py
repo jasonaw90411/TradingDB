@@ -201,9 +201,9 @@ def api_hot_rank():
     if hot_rank_data is not None and not hot_rank_data.empty:
         for idx, row in hot_rank_data.head(20).iterrows():
             hot_rank_items.append({
-                'rank': idx + 1,
+                'rank': int(row.get('当前排名', idx + 1)),
                 'code': str(row.get('代码', '')),
-                'name': str(row.get('名称', '')),
+                'name': str(row.get('股票名称', '')),
                 'price': float(row.get('最新价', 0)) if pd.notna(row.get('最新价')) else 0,
                 'change': float(row.get('涨跌幅', 0)) if pd.notna(row.get('涨跌幅')) else 0,
                 'volume': float(row.get('成交量', 0)) if pd.notna(row.get('成交量')) else 0
